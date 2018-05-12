@@ -1,8 +1,11 @@
 {-# LANGUAGE DeriveFunctor, ExistentialQuantification, GeneralizedNewtypeDeriving #-}
 module Control.Effect.Internal where
 
+import Control.Category
+import Control.Monad ((<=<))
 import Data.Effect.Union
 import Data.TASequence.BinaryTree
+import Prelude hiding (id, (.))
 
 data Effect effects result
   = Pure result
@@ -12,6 +15,10 @@ type Queue effects = BinaryTree (Arrow effects)
 
 newtype Arrow effects a b = Arrow { runArrow :: a -> Effect effects b }
   deriving (Functor)
+
+instance Category (Arrow effects) where
+  id = Arrow pure
+  Arrow f . Arrow g = Arrow (f <=< g)
 
 
 instance Functor (Effect effects) where
