@@ -1,7 +1,8 @@
-{-# LANGUAGE AllowAmbiguousTypes, DataKinds, ExistentialQuantification, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables, TypeApplications, TypeFamilies, TypeInType, TypeOperators, UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes, ConstraintKinds, DataKinds, ExistentialQuantification, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables, TypeApplications, TypeFamilies, TypeInType, TypeOperators, UndecidableInstances #-}
 module Data.Effect.Union
 ( Set
 , Union
+, Member
 , weakenSingleton
 , strengthenSingleton
 , weakenLeft
@@ -20,6 +21,8 @@ import Unsafe.Coerce
 type Set = BinaryTree
 
 data Union (members :: Set (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
+
+type Member effect = Subset ('S effect)
 
 
 weakenSingleton :: member a -> Union ('S member) a
