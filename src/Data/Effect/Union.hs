@@ -54,3 +54,7 @@ class Subset sub super where
 instance Subset ('L member) ('L member) where
   weaken = id
   strengthen = Just
+
+instance Subset (left ':+: right) (left ':+: right) where
+  weaken = id
+  strengthen = Just
