@@ -22,3 +22,8 @@ instance Applicative (Effect effects) where
   Pure f     <*> Pure a     = Pure (f a)
   Pure f     <*> Effect u q = Effect u (q |> Arrow (Pure . f))
   Effect u q <*> m          = Effect u (q |> Arrow (<$> m))
+
+instance Monad (Effect effects) where
+  return = pure
+  Pure a     >>= f = f a
+  Effect u q >>= f = Effect u (q |> Arrow f)
