@@ -31,6 +31,10 @@ instance Applicative (Arrow effects a) where
   pure = Arrow . const . pure
   Arrow f <*> Arrow a = Arrow ((<*>) <$> f <*> a)
 
+instance Member Nondeterminism effects => Alternative (Arrow effects a) where
+  empty = Arrow (const empty)
+  Arrow l <|> Arrow r = Arrow ((<|>) <$> l <*> r)
+
 instance Monad (Arrow effects a) where
   return = pure
   Arrow m >>= f = Arrow (\ e -> do
