@@ -1,0 +1,3 @@
+[submodule "vendor/type-aligned"]
+	path = vendor/type-aligned
+	url = https://github.com/robrix/type-aligned.git
