@@ -1,9 +1,10 @@
-{-# LANGUAGE DataKinds, ExistentialQuantification, KindSignatures, TypeInType #-}
+{-# LANGUAGE DataKinds, ExistentialQuantification, KindSignatures, TypeInType, TypeOperators #-}
 module Data.Effect.Union
 ( Set
 , Union
 , weakenSingleton
 , strengthenSingleton
+, weakenLeft
 ) where
 
 import Data.Effect.BinaryTree
@@ -20,3 +21,7 @@ weakenSingleton = Union 0
 
 strengthenSingleton :: Union ('L member) a -> member a
 strengthenSingleton (Union _ member) = unsafeCoerce member
+
+
+weakenLeft :: Union left a -> Union (left ':+: right) a
+weakenLeft (Union n t) = Union n t
