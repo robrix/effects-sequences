@@ -3,6 +3,8 @@ module Data.Effect.Union
 ( Set
 , Union
 , Member
+, inject
+, project
 , weakenSingleton
 , strengthenSingleton
 , weakenLeft
@@ -23,6 +25,12 @@ type Set = BinaryTree
 data Union (members :: Set (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
 
 type Member effect = Subset ('S effect)
+
+inject :: Member effect effects => effect a -> Union effects a
+inject = weaken . weakenSingleton
+
+project :: Member effect effects => Union effects a -> Maybe (effect a)
+project = fmap strengthenSingleton . strengthen
 
 
 weakenSingleton :: member a -> Union ('S member) a
