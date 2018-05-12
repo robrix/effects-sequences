@@ -50,3 +50,8 @@ instance Monad (Effect effects) where
   return = pure
   Pure a     >>= f = f a
   Effect u q >>= f = Effect u (q |> Arrow f)
+
+
+data Nondeterminism result where
+  Zero :: Nondeterminism result
+  Plus :: Nondeterminism Bool
