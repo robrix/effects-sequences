@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, UndecidableInstances #-}
+{-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, UndecidableInstances #-}
 module Control.Effect.Internal where
 
 import Control.Applicative
@@ -18,6 +18,11 @@ type Queue effects = BinaryTree (Arrow effects)
 
 send :: Member effect effects => effect return -> Effect effects return
 send effect = Effect (inject effect) id
+
+
+run :: Effect 'Z a -> a
+run (Pure a)     = a
+run (Effect _ _) = error "impossible"
 
 
 newtype Arrow effects a b = Arrow { runArrow :: a -> Effect effects b }
