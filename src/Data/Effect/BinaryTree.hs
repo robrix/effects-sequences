@@ -12,3 +12,19 @@ type family Size (ts :: BinaryTree k) where
 
 size :: forall tree . KnownNat (Size tree) => Int
 size = fromInteger (natVal (undefined :: proxy (Size tree)))
+
+
+data Side = L | R
+
+type family Find (side :: Maybe Side) (sub :: BinaryTree k) (super :: BinaryTree k) :: Maybe Side where
+  Find side sub sub               = side
+  Find side sub (left ':+: right) = Find side sub left <> Find side sub right
+  Find _    _   _                 = 'Nothing
+
+type family (left :: Maybe Side) <> (right :: Maybe Side) :: Maybe Side where
+  'Nothing  <> b         = b
+  a         <> 'Nothing  = a
+  ('Just _) <> ('Just _) = 'Nothing
+
+type family FromJust (maybe :: Maybe a) :: a where
+  FromJust ('Just a) = a
