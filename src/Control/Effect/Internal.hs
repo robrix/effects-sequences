@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, ExistentialQuantification, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving #-}
 module Control.Effect.Internal where
 
 import Control.Category
@@ -12,6 +12,11 @@ data Effect effects result
   | forall incremental . Effect (Union effects incremental) (Queue effects incremental result)
 
 type Queue effects = BinaryTree (Arrow effects)
+
+
+send :: Member effect effects => effect return -> Effect effects return
+send effect = Effect (inject effect) id
+
 
 newtype Arrow effects a b = Arrow { runArrow :: a -> Effect effects b }
   deriving (Functor)
