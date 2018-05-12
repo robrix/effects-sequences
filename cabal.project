@@ -1,0 +1,5 @@
+packages: effects-sequences.cabal
+optional-packages: vendor/*/*.cabal
+jobs: $ncpus
+package effects-sequences
+  ghc-options: -Werror
