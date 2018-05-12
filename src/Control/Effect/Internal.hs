@@ -24,6 +24,12 @@ instance Applicative (Arrow effects a) where
   pure = Arrow . const . pure
   Arrow f <*> Arrow a = Arrow ((<*>) <$> f <*> a)
 
+instance Monad (Arrow effects a) where
+  return = pure
+  Arrow m >>= f = Arrow (\ e -> do
+    a <- m e
+    runArrow (f a) e)
+
 
 instance Functor (Effect effects) where
   fmap f (Pure a)     = Pure (f a)
