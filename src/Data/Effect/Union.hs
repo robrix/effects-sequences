@@ -7,10 +7,6 @@ module Data.Effect.Union
 , project
 , weakenSingleton
 , strengthenSingleton
-, weakenLeft
-, weakenRight
-, strengthenLeft
-, strengthenRight
 , Subset(..)
 ) where
 
