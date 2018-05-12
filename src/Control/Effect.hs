@@ -1,1 +1,7 @@
-module Control.Effect where
+module Control.Effect
+( Effect
+, send
+, run
+) where
+
+import Control.Effect.Internal
