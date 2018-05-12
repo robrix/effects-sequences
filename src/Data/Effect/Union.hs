@@ -7,6 +7,7 @@ module Data.Effect.Union
 , weakenLeft
 , weakenRight
 , strengthenLeft
+, strengthenRight
 ) where
 
 import Data.Effect.BinaryTree
@@ -37,3 +38,9 @@ strengthenLeft :: forall left right a . KnownNat (Size left) => Union (left ':+:
 strengthenLeft (Union n member)
   | n < size @left = Just (Union n member)
   | otherwise      = Nothing
+
+strengthenRight :: forall left right a . KnownNat (Size left) => Union (left ':+: right) a -> Maybe (Union right a)
+strengthenRight (Union n member)
+  | let left  = size @left
+  , n >= left = Just (Union (n - left) member)
+  | otherwise = Nothing
