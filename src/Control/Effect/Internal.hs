@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, ExistentialQuantification #-}
+{-# LANGUAGE DeriveFunctor, ExistentialQuantification, GeneralizedNewtypeDeriving #-}
 module Control.Effect.Internal where
 
 import Data.Effect.Union
@@ -11,6 +11,7 @@ data Effect effects result
 type Queue effects = BinaryTree (Arrow effects)
 
 newtype Arrow effects a b = Arrow { runArrow :: a -> Effect effects b }
+  deriving (Functor)
 
 
 instance Functor (Effect effects) where
