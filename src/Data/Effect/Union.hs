@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, ExistentialQuantification, FlexibleContexts, KindSignatures, MultiParamTypeClasses, ScopedTypeVariables, TypeApplications, TypeInType, TypeOperators #-}
+{-# LANGUAGE AllowAmbiguousTypes, DataKinds, ExistentialQuantification, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables, TypeApplications, TypeFamilies, TypeInType, TypeOperators, UndecidableInstances #-}
 module Data.Effect.Union
 ( Set
 , Union
@@ -11,6 +11,7 @@ module Data.Effect.Union
 , Subset(..)
 ) where
 
+import Control.Monad ((<=<))
 import Data.Effect.BinaryTree
 import Data.Kind (Type)
 import GHC.TypeLits
@@ -58,3 +59,20 @@ instance Subset ('S member) ('S member) where
 instance Subset (left ':+: right) (left ':+: right) where
   weaken = id
   strengthen = Just
+
+instance (FromJust (Find ('Just 'L) sub left <> Find ('Just 'R) sub right) ~ side, SubsetOn side sub (left ':+: right)) => Subset sub (left ':+: right) where
+  weaken = weakenOn @side
+  strengthen = strengthenOn @side
+
+
+class SubsetOn side sub super where
+  weakenOn :: Union sub a -> Union super a
+  strengthenOn :: Union super a -> Maybe (Union sub a)
+
+instance (Subset sub left, KnownNat (Size left)) => SubsetOn 'L sub (left ':+: right) where
+  weakenOn = weakenLeft . weaken
+  strengthenOn = strengthen <=< strengthenLeft
+
+instance (Subset sub right, KnownNat (Size left)) => SubsetOn 'R sub (left ':+: right) where
+  weakenOn = weakenRight . weaken
+  strengthenOn = strengthen <=< strengthenRight
