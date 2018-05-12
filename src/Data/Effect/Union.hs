@@ -50,3 +50,7 @@ strengthenRight (Union n member)
 class Subset sub super where
   weaken :: Union sub a -> Union super a
   strengthen :: Union super a -> Maybe (Union sub a)
+
+instance Subset ('L member) ('L member) where
+  weaken = id
+  strengthen = Just
