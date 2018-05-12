@@ -21,10 +21,10 @@ type Set = BinaryTree
 data Union (members :: Set (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
 
 
-weakenSingleton :: member a -> Union ('L member) a
+weakenSingleton :: member a -> Union ('S member) a
 weakenSingleton = Union 0
 
-strengthenSingleton :: Union ('L member) a -> member a
+strengthenSingleton :: Union ('S member) a -> member a
 strengthenSingleton (Union _ member) = unsafeCoerce member
 
 
@@ -51,7 +51,7 @@ class Subset sub super where
   weaken :: Union sub a -> Union super a
   strengthen :: Union super a -> Maybe (Union sub a)
 
-instance Subset ('L member) ('L member) where
+instance Subset ('S member) ('S member) where
   weaken = id
   strengthen = Just
 
