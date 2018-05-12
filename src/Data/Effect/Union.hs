@@ -1,6 +1,6 @@
-{-# LANGUAGE AllowAmbiguousTypes, ConstraintKinds, DataKinds, ExistentialQuantification, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables, TypeApplications, TypeFamilies, TypeInType, TypeOperators, UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes, ConstraintKinds, DataKinds, ExistentialQuantification, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables, TypeApplications, TypeFamilies, TypeOperators, UndecidableInstances #-}
 module Data.Effect.Union
-( Set
+( Set(..)
 , Union
 , Member
 , inject
@@ -15,8 +15,6 @@ import Data.Effect.BinaryTree
 import Data.Kind (Type)
 import GHC.TypeLits
 import Unsafe.Coerce
-
-type Set = BinaryTree
 
 data Union (members :: Set (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
 
@@ -53,7 +51,7 @@ instance (FromJust (Find ('Just 'L) sub left <> Find ('Just 'R) sub right) ~ sid
   strengthen = strengthenOn @side
 
 
-class SubsetOn side sub super where
+class SubsetOn (side :: Side) sub super where
   weakenOn :: Union sub a -> Union super a
   strengthenOn :: Union super a -> Maybe (Union sub a)
 
