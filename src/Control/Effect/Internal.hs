@@ -20,6 +20,10 @@ instance Category (Arrow effects) where
   id = Arrow pure
   Arrow f . Arrow g = Arrow (f <=< g)
 
+instance Applicative (Arrow effects a) where
+  pure = Arrow . const . pure
+  Arrow f <*> Arrow a = Arrow ((<*>) <$> f <*> a)
+
 
 instance Functor (Effect effects) where
   fmap f (Pure a)     = Pure (f a)
