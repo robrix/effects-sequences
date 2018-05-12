@@ -1,5 +1,10 @@
 {-# LANGUAGE DataKinds, ExistentialQuantification, KindSignatures, TypeInType #-}
-module Data.Effect.Union where
+module Data.Effect.Union
+( Set
+, Union
+, weakenSingleton
+, strengthenSingleton
+) where
 
 import Data.Effect.BinaryTree
 import Data.Kind (Type)
