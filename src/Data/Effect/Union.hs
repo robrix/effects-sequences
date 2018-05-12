@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, ExistentialQuantification, FlexibleContexts, KindSignatures, ScopedTypeVariables, TypeApplications, TypeInType, TypeOperators #-}
+{-# LANGUAGE DataKinds, ExistentialQuantification, FlexibleContexts, KindSignatures, MultiParamTypeClasses, ScopedTypeVariables, TypeApplications, TypeInType, TypeOperators #-}
 module Data.Effect.Union
 ( Set
 , Union
@@ -8,6 +8,7 @@ module Data.Effect.Union
 , weakenRight
 , strengthenLeft
 , strengthenRight
+, Subset(..)
 ) where
 
 import Data.Effect.BinaryTree
@@ -44,3 +45,8 @@ strengthenRight (Union n member)
   | let left  = size @left
   , n >= left = Just (Union (n - left) member)
   | otherwise = Nothing
+
+
+class Subset sub super where
+  weaken :: Union sub a -> Union super a
+  strengthen :: Union super a -> Maybe (Union sub a)
