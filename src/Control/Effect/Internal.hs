@@ -1,8 +1,10 @@
-{-# LANGUAGE DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, UndecidableInstances #-}
 module Control.Effect.Internal where
 
+import Control.Applicative
 import Control.Category
 import Control.Monad ((<=<))
+import Data.Bool (bool)
 import Data.Effect.Union
 import Data.TASequence.BinaryTree
 import Prelude hiding (id, (.))
@@ -45,6 +47,10 @@ instance Applicative (Effect effects) where
   Pure f     <*> Pure a     = Pure (f a)
   Pure f     <*> Effect u q = Effect u (q |> Arrow (Pure . f))
   Effect u q <*> m          = Effect u (q |> Arrow (<$> m))
+
+instance Member Nondeterminism effects => Alternative (Effect effects) where
+  empty = send Zero
+  l <|> r = send Plus >>= bool l r
 
 instance Monad (Effect effects) where
   return = pure
