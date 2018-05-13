@@ -93,12 +93,12 @@ instance Show (Arrow effects a b) where
 
 instance Functor (Effect effects) where
   fmap f (Pure a)     = Pure (f a)
-  fmap f (Effect u q) = Effect u (q |> Arrow (Pure . f))
+  fmap f (Effect u q) = Effect u (q |> A.arr f)
 
 instance Applicative (Effect effects) where
   pure = Pure
   Pure f     <*> Pure a     = Pure (f a)
-  Pure f     <*> Effect u q = Effect u (q |> Arrow (Pure . f))
+  Pure f     <*> Effect u q = Effect u (q |> A.arr f)
   Effect u q <*> m          = Effect u (q |> Arrow (<$> m))
 
 instance Member Nondeterminism effects => Alternative (Effect effects) where
