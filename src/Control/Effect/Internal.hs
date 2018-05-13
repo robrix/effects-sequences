@@ -5,9 +5,10 @@ module Control.Effect.Internal
 , send
 -- * Handlers
 , runM
+, handleEffects
+, handleStatefulEffects
 , handleEffect
 , handleStatefulEffect
-, Handle(..)
 , interpose
 , interposeState
 , interposeSplit
@@ -46,24 +47,23 @@ runM :: Monad m => Effect (S m) a -> m a
 runM = handleEffect pure (>>=)
 
 
+handleEffects :: (a -> b) -> (forall result . Union effects result -> (result -> b) -> b) -> Effect effects a -> b
+handleEffects pure' bind = loop
+  where loop (Pure a)     = pure' a
+        loop (Effect u q) = bind u (loop . dequeue q)
+
+handleStatefulEffects :: state -> (state -> a -> b) -> (forall result . state -> Union effects result -> (state -> result -> b) -> b) -> Effect effects a -> b
+handleStatefulEffects state pure' bind = loop state
+  where loop state (Pure a)     = pure' state a
+        loop state (Effect u q) = bind state u (\ state' -> loop state' . dequeue q)
+
+
 handleEffect :: (a -> b) -> (forall result . effect result -> (result -> b) -> b) -> Effect (S effect) a -> b
 handleEffect pure' bind = handleEffects pure' (bind . strengthenSingleton)
 
 handleStatefulEffect :: state -> (state -> a -> b) -> (forall result . state -> effect result -> (state -> result -> b) -> b) -> Effect (S effect) a -> b
 handleStatefulEffect state pure' bind = handleStatefulEffects state pure' (\ state' -> bind state' . strengthenSingleton)
 
-class Handle effects where
-  handleEffects :: (a -> b) -> (forall result . Union effects result -> (result -> b) -> b) -> Effect effects a -> b
-  handleStatefulEffects :: state -> (state -> a -> b) -> (forall result . state -> Union effects result -> (state -> result -> b) -> b) -> Effect effects a -> b
-
-instance Handle (S effect) where
-  handleEffects pure' bind = loop
-    where loop (Pure a)     = pure' a
-          loop (Effect u q) = bind u (loop . dequeue q)
-
-  handleStatefulEffects state pure' bind = loop state
-    where loop state (Pure a)     = pure' state a
-          loop state (Effect u q) = bind state u (\ state' -> loop state' . dequeue q)
 
 runLeft :: KnownNat (Size left) => (a -> Effect right b) -> (forall result . Union left result -> (result -> Effect right b) -> Effect right b) -> Effect (left :+: right) a -> Effect right b
 runLeft pure' bind = loop
