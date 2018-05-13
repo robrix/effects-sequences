@@ -26,7 +26,7 @@ type family Find (side :: Maybe Side) (sub :: Seq k) (super :: Seq k) :: Maybe S
   Find side sub (left ':+: right) = Find side sub left <> Find side sub right
   Find _    _   _                 = 'Nothing
 
-type family (left :: Maybe Side) <> (right :: Maybe Side) :: Maybe Side where
+type family (left :: Maybe k) <> (right :: Maybe k) :: Maybe k where
   'Nothing  <> b         = b
   a         <> 'Nothing  = a
   ('Just _) <> ('Just _) = 'Nothing
