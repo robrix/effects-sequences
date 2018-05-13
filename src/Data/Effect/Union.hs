@@ -73,10 +73,10 @@ instance (SubseqAt rest sub right, KnownNat (Size left)) => SubseqAt ('R ': rest
   strengthenAt = either (const Nothing) (strengthenAt @rest) . decompose
 
 
-class Replace sub sub' super super' where
+class Subseq sub super => Replace sub sub' super super' where
   replace :: (Union sub a -> Union sub' a) -> Union super a -> Union super' a
 
-instance (PathTo sub super ~ path, ReplaceAt path sub sub' super super') => Replace sub sub' super super' where
+instance (PathTo sub super ~ path, SubseqAt path sub super, ReplaceAt path sub sub' super super') => Replace sub sub' super super' where
   replace = replaceAt @path
 
 
