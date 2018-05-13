@@ -33,3 +33,13 @@ type family (left :: Maybe k) <> (right :: Maybe k) :: Maybe k where
 
 type family FromJust (maybe :: Maybe a) :: a where
   FromJust ('Just a) = a
+
+
+type family Path (sub :: Seq k) (super :: Seq k) :: [Side] where
+  Path sub sub              = '[]
+  Path sub (left :+: right) = FromJust (Path' 'L sub left <> Path' 'R sub right)
+
+type family Path' (side :: Side) (sub :: Seq k) (super :: Seq k) :: Maybe [Side] where
+  Path' side sub sub              = 'Just '[side]
+  Path' side sub (left :+: right) = 'Just (side ': FromJust (Path' 'L sub left <> Path' 'R sub right))
+  Path' _    _   _                = 'Nothing
