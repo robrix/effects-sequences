@@ -10,6 +10,8 @@ type family Size (ts :: Seq k) where
   Size ('S _)            = 1
   Size (left ':+: right) = Size left + Size right
 
+infixr 5 :+:
+
 size :: forall tree . KnownNat (Size tree) => Int
 size = fromInteger (natVal (undefined :: proxy (Size tree)))
 
