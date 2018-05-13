@@ -11,6 +11,7 @@ module Data.Effect.Union
 , strengthenSingleton
 , decompose
 , Subseq(..)
+, Replace(..)
 , KnownNat
 , Size
 ) where
@@ -70,6 +71,10 @@ instance (SubseqAt rest sub left, KnownNat (Size left)) => SubseqAt ('L ': rest)
 instance (SubseqAt rest sub right, KnownNat (Size left)) => SubseqAt ('R ': rest) sub (left ':+: right) where
   weakenAt     = weakenRight . weakenAt @rest
   strengthenAt = either (const Nothing) (strengthenAt @rest) . decompose
+
+
+class Replace sub sub' super super' where
+  replace :: (Union sub a -> Union sub' a) -> Union super a -> Union super' a
 
 
 weakenLeft :: Union left a -> Union (left ':+: right) a
