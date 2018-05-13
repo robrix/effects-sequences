@@ -5,6 +5,7 @@ module Control.Effect
 -- * Handlers
 , run
 , runM
+, interpose
 -- * Unions
 , Member
 ) where

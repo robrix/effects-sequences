@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, StandaloneDeriving, UndecidableInstances #-}
+{-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, RankNTypes, StandaloneDeriving, UndecidableInstances #-}
 module Control.Effect.Internal where
 
 import Control.Applicative
@@ -28,6 +28,15 @@ run (Effect _ _) = error "impossible"
 runM :: Monad m => Effect ('S m) a -> m a
 runM (Pure a)     = pure a
 runM (Effect u q) = strengthenSingleton u >>= runM . dequeue q
+
+
+interpose :: Member effect effects => (a -> Effect effects b) -> (forall result . effect result -> (result -> Effect effects b) -> Effect effects b) -> Effect effects a -> Effect effects b
+interpose pure' bind = loop
+  where loop (Pure a)           = pure' a
+        loop (Effect u q)
+          | Just x <- project u = bind x k
+          | otherwise           = Effect u (tsingleton (Arrow k))
+          where k = loop . dequeue q
 
 
 dequeue :: Queue effects a b -> a -> Effect effects b
