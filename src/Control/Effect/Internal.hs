@@ -6,8 +6,8 @@ module Control.Effect.Internal
 -- * Handlers
 , runM
 , handleEffect
+, handleStatefulEffect
 , Handle(..)
-, runSingletonState
 , interpose
 , interposeState
 , interposeSplit
@@ -49,6 +49,9 @@ runM = handleEffect pure (>>=)
 handleEffect :: (a -> b) -> (forall result . effect result -> (result -> b) -> b) -> Effect (S effect) a -> b
 handleEffect pure' bind = handleEffects pure' (bind . strengthenSingleton)
 
+handleStatefulEffect :: state -> (state -> a -> b) -> (forall result . state -> effect result -> (state -> result -> b) -> b) -> Effect (S effect) a -> b
+handleStatefulEffect state pure' bind = handleStatefulEffects state pure' (\ state' -> bind state' . strengthenSingleton)
+
 class Handle effects where
   handleEffects :: (a -> b) -> (forall result . Union effects result -> (result -> b) -> b) -> Effect effects a -> b
   handleStatefulEffects :: state -> (state -> a -> b) -> (forall result . state -> Union effects result -> (state -> result -> b) -> b) -> Effect effects a -> b
@@ -68,11 +71,6 @@ runLeft pure' bind = loop
         loop (Effect u q) = case decompose u of
           Left  u' -> bind   u'              (loop . dequeue q)
           Right u' -> Effect u' (unit (Arrow (loop . dequeue q)))
-
-runSingletonState :: state -> (state -> a -> b) -> (forall result . state -> eff result -> (state -> result -> b) -> b) -> Effect (S eff) a -> b
-runSingletonState state pure' bind = loop state
-  where loop state (Pure a)     = pure' state a
-        loop state (Effect u q) = bind state (strengthenSingleton u) (\ state' -> loop state' . dequeue q)
 
 
 interpose :: Member effect effects => (a -> Effect effects b) -> (forall result . effect result -> (result -> Effect effects b) -> Effect effects b) -> Effect effects a -> Effect effects b

@@ -25,7 +25,7 @@ modify' f = do
 
 
 runState :: state -> Effect (S (State state)) a -> (a, state)
-runState state = runSingletonState state (flip (,)) (\ state eff yield -> case eff of
+runState state = handleStatefulEffect state (flip (,)) (\ state eff yield -> case eff of
   Get -> yield state state
   Put state' -> yield state' ())
 

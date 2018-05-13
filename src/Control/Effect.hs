@@ -6,8 +6,8 @@ module Control.Effect
 -- * Handlers
 , runM
 , handleEffect
+, handleStatefulEffect
 , Handle(..)
-, runSingletonState
 , interpose
 , interposeState
 , interposeSplit
