@@ -2,6 +2,7 @@
 module Control.Effect.Internal where
 
 import Control.Applicative
+import qualified Control.Arrow as A
 import Control.Category
 import Control.Monad ((<=<))
 import Data.Bool (bool)
@@ -67,6 +68,10 @@ newtype Arrow effects a b = Arrow { runArrow :: a -> Effect effects b }
 instance Category (Arrow effects) where
   id = Arrow pure
   Arrow f . Arrow g = Arrow (f <=< g)
+
+instance A.Arrow (Arrow effects) where
+  arr = Arrow . (pure .)
+  Arrow f *** Arrow g = Arrow (\ (a, b) -> (,) <$> f a <*> g b)
 
 instance Applicative (Arrow effects a) where
   pure = Arrow . const . pure
