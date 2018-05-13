@@ -1,5 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes, DataKinds, FlexibleContexts, PolyKinds, ScopedTypeVariables, TypeFamilies, TypeOperators, UndecidableInstances #-}
-module Data.Effect.BinaryTree where
+module Data.Effect.Sequence where
 
 import GHC.TypeLits
 

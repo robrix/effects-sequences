@@ -13,7 +13,7 @@ module Data.Effect.Union
 , Size
 ) where
 
-import Data.Effect.BinaryTree
+import Data.Effect.Sequence
 import Data.Functor.Classes (Show1(..))
 import Data.Kind (Type)
 import GHC.TypeLits
