@@ -8,7 +8,7 @@ module Data.Effect.Union
 , weakenSingleton
 , strengthenSingleton
 , decompose
-, Subset(..)
+, Subseq(..)
 ) where
 
 import Data.Effect.BinaryTree
@@ -19,7 +19,7 @@ import Unsafe.Coerce
 
 data Union (members :: Seq (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
 
-type Member effect = Subset ('S effect)
+type Member effect = Subseq ('S effect)
 
 inject :: Member effect effects => effect a -> Union effects a
 inject = weaken . weakenSingleton
@@ -42,19 +42,19 @@ decompose (Union n member)
   where left = size @left
 
 
-class Subset sub super where
+class Subseq sub super where
   weaken :: Union sub a -> Union super a
   strengthen :: Union super a -> Maybe (Union sub a)
 
-instance Subset ('S member) ('S member) where
+instance Subseq ('S member) ('S member) where
   weaken = id
   strengthen = Just
 
-instance Subset (left ':+: right) (left ':+: right) where
+instance Subseq (left ':+: right) (left ':+: right) where
   weaken = id
   strengthen = Just
 
-instance (FromJust (Find ('Just 'L) sub left <> Find ('Just 'R) sub right) ~ side, SubsetOn side sub (left ':+: right)) => Subset sub (left ':+: right) where
+instance (FromJust (Find ('Just 'L) sub left <> Find ('Just 'R) sub right) ~ side, SubsetOn side sub (left ':+: right)) => Subseq sub (left ':+: right) where
   weaken = weakenOn @side
   strengthen = strengthenOn @side
 
@@ -63,11 +63,11 @@ class SubsetOn (side :: Side) sub super where
   weakenOn :: Union sub a -> Union super a
   strengthenOn :: Union super a -> Maybe (Union sub a)
 
-instance (Subset sub left, KnownNat (Size left)) => SubsetOn 'L sub (left ':+: right) where
+instance (Subseq sub left, KnownNat (Size left)) => SubsetOn 'L sub (left ':+: right) where
   weakenOn = weakenLeft . weaken
   strengthenOn = either strengthen (const Nothing) . decompose
 
-instance (Subset sub right, KnownNat (Size left)) => SubsetOn 'R sub (left ':+: right) where
+instance (Subseq sub right, KnownNat (Size left)) => SubsetOn 'R sub (left ':+: right) where
   weakenOn = weakenRight . weaken
   strengthenOn = either (const Nothing) strengthen . decompose
 
