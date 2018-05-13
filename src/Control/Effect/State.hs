@@ -2,6 +2,7 @@
 module Control.Effect.State where
 
 import Control.Effect
+import Data.Functor.Classes (Show1(..))
 
 data State state result where
   Get ::          State state state
@@ -24,3 +25,6 @@ modify' f = do
 
 
 deriving instance Show state => Show (State state result)
+
+instance Show state => Show1 (State state) where
+  liftShowsPrec _ _ = showsPrec
