@@ -45,8 +45,8 @@ decompose (Union n member)
 
 
 class Subseq sub super where
-  weaken :: Union sub a -> Union super a
-  strengthen :: Union super a -> Maybe (Union sub a)
+  weaken     :: Union sub   a ->        Union super a
+  strengthen :: Union super a -> Maybe (Union sub   a)
 
 instance Subseq ('S member) ('S member) where
   weaken = id
