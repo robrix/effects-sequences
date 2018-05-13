@@ -9,6 +9,8 @@ module Data.Effect.Union
 , strengthenSingleton
 , decompose
 , Subseq(..)
+, KnownNat
+, Size
 ) where
 
 import Data.Effect.BinaryTree
