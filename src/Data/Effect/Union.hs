@@ -13,7 +13,7 @@ module Data.Effect.Union
 import Control.Applicative ((<|>))
 import Control.Monad ((<=<))
 import Data.Effect.BinaryTree
-import Data.Functor.Classes (showsBinaryWith)
+import Data.Functor.Classes (Show1(..), showsBinaryWith)
 import Data.Kind (Type)
 import Data.Maybe (fromMaybe)
 import GHC.TypeLits
@@ -91,3 +91,6 @@ instance Show (member a) => Show (Union ('S member) a) where
 
 instance (KnownNat (Size left), Show (Union left a), Show (Union right a)) => Show (Union (left ':+: right) a) where
   showsPrec d u@(Union n _) = fromMaybe (showsBinaryWith showsPrec (const showChar) "Union" d n '_') (showsPrec d <$> strengthenLeft u <|> showsPrec d <$> strengthenRight u)
+
+instance Show1 member => Show1 (Union ('S member)) where
+  liftShowsPrec sp sl d = liftShowsPrec sp sl d . strengthenSingleton
