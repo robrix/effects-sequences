@@ -3,6 +3,7 @@ module Data.Effect.BinaryTree where
 
 import GHC.TypeLits
 
+-- | Non-empty sequences, represented as binary trees.
 data Seq a = S a | Seq a :+: Seq a
 
 type family Size (ts :: Seq k) where
