@@ -10,6 +10,7 @@ module Control.Effect.Internal
 , interpose
 -- * Effects
 , Nondeterminism(..)
+, Fail(..)
 ) where
 
 import Control.Applicative
@@ -152,4 +153,11 @@ data Nondeterminism result where
 deriving instance Show (Nondeterminism result)
 
 instance Show1 Nondeterminism where
+  liftShowsPrec _ _ = showsPrec
+
+
+newtype Fail result = Fail String
+  deriving (Show)
+
+instance Show1 Fail where
   liftShowsPrec _ _ = showsPrec
