@@ -50,7 +50,7 @@ class Subseq sub super where
   weaken     :: Union sub   a ->        Union super a
   strengthen :: Union super a -> Maybe (Union sub   a)
 
-instance (Path sub super ~ path, SubseqAt path sub super) => Subseq sub super where
+instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super where
   weaken = weakenAt @path
   strengthen = strengthenAt @path
 
