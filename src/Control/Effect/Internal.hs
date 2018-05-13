@@ -36,7 +36,7 @@ runM (Pure a)     = pure a
 runM (Effect u q) = strengthenSingleton u >>= runM . dequeue q
 
 
-runSingleton :: (a -> b) -> (forall result . eff result -> (result -> b) -> b) -> Effect ('S eff) a -> b
+runSingleton :: (a -> b) -> (forall result . effect result -> (result -> b) -> b) -> Effect ('S effect) a -> b
 runSingleton pure' bind = loop
   where loop (Pure a)     = pure' a
         loop (Effect u q) = bind (strengthenSingleton u) (loop . dequeue q)
