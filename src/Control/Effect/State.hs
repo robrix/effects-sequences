@@ -1,7 +1,10 @@
-{-# LANGUAGE FlexibleContexts, GADTs, StandaloneDeriving #-}
+{-# LANGUAGE FlexibleContexts, GADTs, StandaloneDeriving, TypeOperators, ViewPatterns #-}
 module Control.Effect.State where
 
 import Control.Effect
+import Control.Effect.Reader
+import Control.Effect.Writer
+import Data.Effect.Union (strengthenSingleton)
 import Data.Functor.Classes (Show1(..))
 
 data State state result where
@@ -28,6 +31,11 @@ runState :: state -> Effect (S (State state)) a -> (a, state)
 runState state = handleStatefulEffect state (flip (,)) (\ state eff yield -> case eff of
   Get -> yield state state
   Put state' -> yield state' ())
+
+runStateRW :: state -> Effect (S (Reader state) :+: S (Writer state)) a -> (a, state)
+runStateRW state = handleStatefulEffects state (flip (,)) (\ state effs yield -> case decompose effs of
+  Left  (strengthenSingleton -> Ask)         -> yield state state
+  Right (strengthenSingleton -> Tell state') -> yield state' ())
 
 
 deriving instance Show state => Show (State state result)
