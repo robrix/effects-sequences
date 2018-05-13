@@ -7,6 +7,7 @@ module Control.Effect.Internal
 , runM
 , handleEffects
 , handleStatefulEffects
+, reinterpretEffects
 , handleEffect
 , handleStatefulEffect
 , interpose
@@ -56,6 +57,14 @@ handleStatefulEffects :: state -> (state -> a -> b) -> (forall result . state ->
 handleStatefulEffects state pure' bind = loop state
   where loop state (Pure a)     = pure' state a
         loop state (Effect u q) = bind state u (\ state' -> loop state' . dequeue q)
+
+
+reinterpretEffects :: Replace sub sub' super super' => (a -> Effect super' a') -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+reinterpretEffects pure' bind = loop
+  where loop (Pure a)     = pure' a
+        loop (Effect u q) = case split u of
+          Left  u' -> Effect u' (unit (Arrow (loop . dequeue q)))
+          Right u' -> bind u' (loop . dequeue q)
 
 
 handleEffect :: (a -> b) -> (forall result . effect result -> (result -> b) -> b) -> Effect (S effect) a -> b
