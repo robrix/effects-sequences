@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, MultiParamTypeClasses, RankNTypes, StandaloneDeriving, TypeOperators, UndecidableInstances #-}
 module Control.Effect.Internal
-( Effect
+( Effect(..)
 -- * Constructing effects
 , send
 -- * Handlers
