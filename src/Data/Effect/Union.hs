@@ -18,7 +18,6 @@ import Control.Monad ((<=<))
 import Data.Effect.Sequence
 import Data.Functor.Classes (Show1(..))
 import Data.Kind (Type)
-import GHC.TypeLits
 import Prelude hiding (splitAt)
 import Unsafe.Coerce
 
@@ -40,11 +39,10 @@ strengthenSingleton :: Union (S member) a -> member a
 strengthenSingleton (Union _ member) = unsafeCoerce member
 
 
-decompose :: forall left right a . KnownNat (Size left) => Union (left ':+: right) a -> Either (Union left a) (Union right a)
+decompose :: Union (left ':+: right) a -> Either (Union left a) (Union right a)
 decompose (Union n member)
-  | n < left  = Left  (Union n          member)
-  | otherwise = Right (Union (n - left) member)
-  where left = size @left
+  | even n    = Left  (Union (n `div` 2) member)
+  | otherwise = Right (Union (n `div` 2) member)
 
 
 class Subseq sub super where
@@ -64,11 +62,11 @@ instance SubseqAt '[] sub sub where
   weakenAt     = id
   strengthenAt = Just
 
-instance (SubseqAt rest sub left, KnownNat (Size left)) => SubseqAt ('L ': rest) sub (left ':+: right) where
+instance SubseqAt rest sub left => SubseqAt ('L ': rest) sub (left ':+: right) where
   weakenAt     = weakenLeft . weakenAt @rest
   strengthenAt = either (strengthenAt @rest) (const Nothing) . decompose
 
-instance (SubseqAt rest sub right, KnownNat (Size left)) => SubseqAt ('R ': rest) sub (left ':+: right) where
+instance SubseqAt rest sub right => SubseqAt ('R ': rest) sub (left ':+: right) where
   weakenAt     = weakenRight . weakenAt @rest
   strengthenAt = either (const Nothing) (strengthenAt @rest) . decompose
 
@@ -90,44 +88,44 @@ instance ReplaceAt '[] sub sub' sub sub' where
   replaceAt = ($)
   splitAt   = Right
 
-instance (KnownNat (Size left), KnownNat (Size left'), ReplaceAt rest sub sub' left left') => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left' ':+: right) where
+instance ReplaceAt rest sub sub' left left' => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left' ':+: right) where
   replaceAt = replaceLeft . replaceAt @rest
   splitAt   = either (Left . weakenLeft) Right . splitAt @rest @sub @sub' <=< splitLeft
 
-instance (KnownNat (Size left), ReplaceAt rest sub sub' right right') => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left ':+: right') where
+instance ReplaceAt rest sub sub' right right' => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left ':+: right') where
   replaceAt = replaceRight . replaceAt @rest
   splitAt   = either (Left . weakenRight) Right . splitAt @rest @sub @sub' <=< splitRight
 
 
 weakenLeft :: Union left a -> Union (left ':+: right) a
-weakenLeft (Union n t) = Union n t
+weakenLeft (Union n t) = Union (2 * n) t
 
-weakenRight :: forall left right a . KnownNat (Size left) => Union right a -> Union (left ':+: right) a
-weakenRight (Union n t) = Union (size @left + n) t
+weakenRight :: Union right a -> Union (left ':+: right) a
+weakenRight (Union n t) = Union (1 + (2 * n)) t
 
 
-replaceLeft :: (KnownNat (Size left), KnownNat (Size left')) => (Union left a -> Union left' a) -> Union (left ':+: right) a ->  Union (left' ':+: right) a
+replaceLeft :: (Union left a -> Union left' a) -> Union (left ':+: right) a ->  Union (left' ':+: right) a
 replaceLeft f = either (weakenLeft . f) weakenRight . decompose
 
-replaceRight :: KnownNat (Size left) => (Union right a -> Union right' a) -> Union (left ':+: right) a ->  Union (left ':+: right') a
+replaceRight :: (Union right a -> Union right' a) -> Union (left ':+: right) a ->  Union (left ':+: right') a
 replaceRight f = either weakenLeft (weakenRight . f) . decompose
 
 
-splitLeft :: (KnownNat (Size left), KnownNat (Size left')) => Union (left ':+: right) a -> Either (Union (left' ':+: right) a) (Union left a)
+splitLeft :: Union (left ':+: right) a -> Either (Union (left' ':+: right) a) (Union left a)
 splitLeft = either Right (Left . weakenRight) . decompose
 
-splitRight :: KnownNat (Size left) => Union (left ':+: right) a -> Either (Union (left ':+: right') a) (Union right a)
+splitRight :: Union (left ':+: right) a -> Either (Union (left ':+: right') a) (Union right a)
 splitRight = either (Left . weakenLeft) Right . decompose
 
 
 instance Show (member a) => Show (Union (S member) a) where
   showsPrec d = showsPrec d . strengthenSingleton
 
-instance (KnownNat (Size left), Show (Union left a), Show (Union right a)) => Show (Union (left ':+: right) a) where
+instance (Show (Union left a), Show (Union right a)) => Show (Union (left ':+: right) a) where
   showsPrec d = either (showsPrec d) (showsPrec d) . decompose
 
 instance Show1 member => Show1 (Union (S member)) where
   liftShowsPrec sp sl d = liftShowsPrec sp sl d . strengthenSingleton
 
-instance (KnownNat (Size left), Show1 (Union left), Show1 (Union right)) => Show1 (Union (left ':+: right)) where
+instance (Show1 (Union left), Show1 (Union right)) => Show1 (Union (left ':+: right)) where
   liftShowsPrec sp sl d = either (liftShowsPrec sp sl d) (liftShowsPrec sp sl d) . decompose
