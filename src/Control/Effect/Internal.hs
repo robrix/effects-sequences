@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, UndecidableInstances #-}
+{-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, StandaloneDeriving, UndecidableInstances #-}
 module Control.Effect.Internal where
 
 import Control.Applicative
@@ -82,3 +82,5 @@ instance Monad (Effect effects) where
 data Nondeterminism result where
   Zero :: Nondeterminism result
   Plus :: Nondeterminism Bool
+
+deriving instance Show (Nondeterminism result)
