@@ -2,6 +2,7 @@
 module Control.Effect.Nondeterminism
 ( Nondeterminism(..)
 , msplit
+, unmsplit
 , bagofN
 , ifte
 , once
@@ -22,6 +23,9 @@ msplit = interposeSplit []
       []    -> pure Nothing
       j:jq' -> loop jq' j
     Plus -> loop (yield False : jq) (yield True))
+
+unmsplit :: Member Nondeterminism effects => Maybe (a, Effect effects a) -> Effect effects a
+unmsplit = maybe empty (uncurry ((<|>) . pure))
 
 bagofN :: Member Nondeterminism effects => Maybe Int -> Effect effects a -> Effect effects [a]
 bagofN (Just n) _ | n <= 0 = pure []
