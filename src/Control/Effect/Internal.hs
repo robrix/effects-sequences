@@ -5,6 +5,7 @@ module Control.Effect.Internal
 , send
 -- * Handlers
 , runM
+, handleEffect
 , Handle(..)
 , runSingletonState
 , interpose
@@ -45,6 +46,9 @@ send effect = Effect (inject effect) id
 runM :: Monad m => Effect ('S m) a -> m a
 runM = handleEffects pure ((>>=) . strengthenSingleton)
 
+
+handleEffect :: (a -> b) -> (forall result . effect result -> (result -> b) -> b) -> Effect ('S effect) a -> b
+handleEffect pure' bind = handleEffects pure' (bind . strengthenSingleton)
 
 class Handle effects where
   handleEffects :: (a -> b) -> (forall result . Union effects result -> (result -> b) -> b) -> Effect effects a -> b
