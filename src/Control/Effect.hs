@@ -16,6 +16,9 @@ module Control.Effect
 , Seq
 , S
 , type (:+:)
+, decompose
+, inject
+, project
 ) where
 
 import Control.Effect.Internal
