@@ -11,7 +11,6 @@ module Data.Effect.Union
 , Subset(..)
 ) where
 
-import Control.Monad ((<=<))
 import Data.Effect.BinaryTree
 import Data.Functor.Classes (Show1(..), showsBinaryWith)
 import Data.Kind (Type)
@@ -66,11 +65,11 @@ class SubsetOn (side :: Side) sub super where
 
 instance (Subset sub left, KnownNat (Size left)) => SubsetOn 'L sub (left ':+: right) where
   weakenOn = weakenLeft . weaken
-  strengthenOn = strengthen <=< strengthenLeft
+  strengthenOn = either strengthen (const Nothing) . decompose
 
 instance (Subset sub right, KnownNat (Size left)) => SubsetOn 'R sub (left ':+: right) where
   weakenOn = weakenRight . weaken
-  strengthenOn = strengthen <=< strengthenRight
+  strengthenOn = either (const Nothing) strengthen . decompose
 
 
 weakenLeft :: Union left a -> Union (left ':+: right) a
@@ -78,18 +77,6 @@ weakenLeft (Union n t) = Union n t
 
 weakenRight :: forall left right a . KnownNat (Size left) => Union right a -> Union (left ':+: right) a
 weakenRight (Union n t) = Union (size @left + n) t
-
-
-strengthenLeft :: forall left right a . KnownNat (Size left) => Union (left ':+: right) a -> Maybe (Union left a)
-strengthenLeft (Union n member)
-  | n < size @left = Just (Union n member)
-  | otherwise      = Nothing
-
-strengthenRight :: forall left right a . KnownNat (Size left) => Union (left ':+: right) a -> Maybe (Union right a)
-strengthenRight (Union n member)
-  | let left  = size @left
-  , n >= left = Just (Union (n - left) member)
-  | otherwise = Nothing
 
 
 instance Show (member a) => Show (Union ('S member) a) where
