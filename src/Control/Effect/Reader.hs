@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, GADTs, StandaloneDeriving #-}
+{-# LANGUAGE FlexibleContexts, GADTs, ScopedTypeVariables, StandaloneDeriving #-}
 module Control.Effect.Reader where
 
 import Control.Effect
@@ -9,6 +9,14 @@ data Reader context result where
 
 ask :: Member (Reader context) effects => Effect effects context
 ask = send Reader
+
+local :: forall context effects a . Member (Reader context) effects => (context -> context) -> Effect effects a -> Effect effects a
+local f m = do
+  context <- ask
+  let context' = f context
+      bind :: Reader context result -> (result -> Effect effects b) -> Effect effects b
+      bind Reader yield = yield context'
+  interpose pure bind m
 
 
 deriving instance Show (Reader context result)
