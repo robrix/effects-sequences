@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, RankNTypes, StandaloneDeriving, UndecidableInstances #-}
+{-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, RankNTypes, StandaloneDeriving, TypeOperators, UndecidableInstances #-}
 module Control.Effect.Internal where
 
 import Control.Applicative
@@ -29,6 +29,13 @@ runSingleton :: (a -> b) -> (forall result . eff result -> (result -> b) -> b) -
 runSingleton pure' bind = loop
   where loop (Pure a)     = pure' a
         loop (Effect u q) = bind (strengthenSingleton u) (loop . dequeue q)
+
+runLeft :: KnownNat (Size left) => (a -> Effect right b) -> (forall result . Union left result -> (result -> Effect right b) -> Effect right b) -> Effect (left ':+: right) a -> Effect right b
+runLeft pure' bind = loop
+  where loop (Pure a) = pure' a
+        loop (Effect u q) = case decompose u of
+          Left  u' -> bind   u'              (loop . dequeue q)
+          Right u' -> Effect u' (unit (Arrow (loop . dequeue q)))
 
 runSingletonState :: state -> (state -> a -> b) -> (forall result . state -> eff result -> (state -> result -> b) -> b) -> Effect ('S eff) a -> b
 runSingletonState state pure' bind = loop state
