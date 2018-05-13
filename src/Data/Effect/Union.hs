@@ -75,12 +75,12 @@ class (Subseq sub super, Subseq sub' super') => Replace sub sub' super super' | 
   replace :: (Union sub a -> Union sub' a) -> Union super a -> Union super' a
   split   :: Union super a -> Either (Union super' a) (Union sub a)
 
-instance (PathTo sub super ~ path, PathTo sub' super' ~ path, SubseqAt path sub super, SubseqAt path sub' super', ReplaceAt path sub sub' super super') => Replace sub sub' super super' where
+instance (PathTo sub super ~ path, PathTo sub' super' ~ path, ReplaceAt path sub sub' super super') => Replace sub sub' super super' where
   replace = replaceAt @path
   split   = splitAt @path
 
 
-class ReplaceAt (path :: [Side]) sub sub' super super' | sub sub' super -> super', sub super super' -> sub', sub sub' super' -> super, sub' super super' -> sub where
+class (SubseqAt path sub super, SubseqAt path sub' super') => ReplaceAt (path :: [Side]) sub sub' super super' | sub sub' super -> super', sub super super' -> sub', sub sub' super' -> super, sub' super super' -> sub where
   replaceAt :: (Union sub a -> Union sub' a) -> Union super a -> Union super' a
   splitAt   :: Union super a -> Either (Union super' a) (Union sub a)
 
