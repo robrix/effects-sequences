@@ -5,6 +5,7 @@ module Control.Effect
 -- * Handlers
 , run
 , runM
+, runSingleton
 , interpose
 -- * Unions
 , Member
