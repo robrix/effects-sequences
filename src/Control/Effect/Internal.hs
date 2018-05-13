@@ -39,13 +39,9 @@ class Handle effects where
   handleEffect :: (a -> b) -> (forall result . Union effects result -> (result -> b) -> b) -> Effect effects a -> b
 
 instance Handle ('S effect) where
-  handleEffect = runSingleton
-
-
-runSingleton :: (a -> b) -> (forall result . Union ('S effect) result -> (result -> b) -> b) -> Effect ('S effect) a -> b
-runSingleton pure' bind = loop
-  where loop (Pure a)     = pure' a
-        loop (Effect u q) = bind u (loop . dequeue q)
+  handleEffect pure' bind = loop
+    where loop (Pure a)     = pure' a
+          loop (Effect u q) = bind u (loop . dequeue q)
 
 runLeft :: KnownNat (Size left) => (a -> Effect right b) -> (forall result . Union left result -> (result -> Effect right b) -> Effect right b) -> Effect (left ':+: right) a -> Effect right b
 runLeft pure' bind = loop
