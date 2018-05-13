@@ -8,6 +8,7 @@ module Control.Effect.Internal
 , Handle(..)
 , runSingletonState
 , interpose
+, interposeState
 -- * Effects
 , Nondeterminism(..)
 , Fail(..)
@@ -65,6 +66,19 @@ interpose pure' bind = loop
           | Just x <- project u = bind x k
           | otherwise           = Effect u (unit (Arrow k))
           where k = loop . dequeue q
+
+interposeState :: Member effect effects
+               => state
+               -> (state -> a -> Effect effects b)
+               -> (forall result . state -> effect result -> (state -> result -> Effect effects b) -> Effect effects b)
+               -> Effect effects a
+               -> Effect effects b
+interposeState initial pure' bind = loop initial
+  where loop state (Pure a)     = pure' state a
+        loop state (Effect u q) = case project u of
+          Just x -> bind state x k
+          _      -> Effect u (unit (Arrow (k state)))
+          where k state' = loop state' . dequeue q
 
 
 newtype Queue effects a b = Queue (TA.BinaryTree (Arrow effects) a b)

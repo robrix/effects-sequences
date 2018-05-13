@@ -7,6 +7,7 @@ module Control.Effect
 , Handle(..)
 , runSingletonState
 , interpose
+, interposeState
 -- * Unions
 , Member
 , Seq(..)
