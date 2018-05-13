@@ -74,14 +74,6 @@ handleStatefulEffect :: state -> (state -> a -> b) -> (forall result . state -> 
 handleStatefulEffect state pure' bind = handleStatefulEffects state pure' (\ state' -> bind state' . strengthenSingleton)
 
 
-runLeft :: KnownNat (Size left) => (a -> Effect right b) -> (forall result . Union left result -> (result -> Effect right b) -> Effect right b) -> Effect (left :+: right) a -> Effect right b
-runLeft pure' bind = loop
-  where loop (Pure a) = pure' a
-        loop (Effect u q) = case decompose u of
-          Left  u' -> bind   u'              (loop . dequeue q)
-          Right u' -> Effect u' (unit (Arrow (loop . dequeue q)))
-
-
 interpose :: Member effect effects => (a -> Effect effects b) -> (forall result . effect result -> (result -> Effect effects b) -> Effect effects b) -> Effect effects a -> Effect effects b
 interpose pure' bind = loop
   where loop (Pure a)           = pure' a
