@@ -12,8 +12,6 @@ module Data.Effect.Union
 , decompose
 , Subseq(..)
 , Replace(..)
-, KnownNat
-, Size
 ) where
 
 import Control.Monad ((<=<))
