@@ -107,6 +107,13 @@ replaceRight :: KnownNat (Size left) => (Union right a -> Union right' a) -> Uni
 replaceRight f = either weakenLeft (weakenRight . f) . decompose
 
 
+splitLeft :: (KnownNat (Size left), KnownNat (Size left')) => Union (left ':+: right) a -> Either (Union (left' ':+: right) a) (Union left a)
+splitLeft = either Right (Left . weakenRight) . decompose
+
+splitRight :: KnownNat (Size left) => Union (left ':+: right) a -> Either (Union (left ':+: right') a) (Union right a)
+splitRight = either (Left . weakenLeft) Right . decompose
+
+
 instance Show (member a) => Show (Union (S member) a) where
   showsPrec d = showsPrec d . strengthenSingleton
 
