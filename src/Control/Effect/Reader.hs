@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, FlexibleContexts, GADTs, ScopedTypeVariables, StandaloneDeriving #-}
+{-# LANGUAGE FlexibleContexts, GADTs, ScopedTypeVariables, StandaloneDeriving #-}
 module Control.Effect.Reader where
 
 import Control.Effect
@@ -19,7 +19,7 @@ local f m = do
   interpose pure bind m
 
 
-runReader :: context -> Effect ('S (Reader context)) a -> a
+runReader :: context -> Effect (S (Reader context)) a -> a
 runReader context = handleEffect id (\ Reader yield -> yield context)
 
 

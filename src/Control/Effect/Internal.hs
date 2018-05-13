@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, MultiParamTypeClasses, RankNTypes, StandaloneDeriving, TypeOperators, UndecidableInstances #-}
+{-# LANGUAGE DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, MultiParamTypeClasses, RankNTypes, StandaloneDeriving, TypeOperators, TypeSynonymInstances, UndecidableInstances #-}
 module Control.Effect.Internal
 ( Effect(..)
 -- * Constructing effects
@@ -42,29 +42,29 @@ send :: Member effect effects => effect return -> Effect effects return
 send effect = Effect (inject effect) id
 
 
-runM :: Monad m => Effect ('S m) a -> m a
+runM :: Monad m => Effect (S m) a -> m a
 runM = handleEffect pure (>>=)
 
 
-handleEffect :: (a -> b) -> (forall result . effect result -> (result -> b) -> b) -> Effect ('S effect) a -> b
+handleEffect :: (a -> b) -> (forall result . effect result -> (result -> b) -> b) -> Effect (S effect) a -> b
 handleEffect pure' bind = handleEffects pure' (bind . strengthenSingleton)
 
 class Handle effects where
   handleEffects :: (a -> b) -> (forall result . Union effects result -> (result -> b) -> b) -> Effect effects a -> b
 
-instance Handle ('S effect) where
+instance Handle (S effect) where
   handleEffects pure' bind = loop
     where loop (Pure a)     = pure' a
           loop (Effect u q) = bind u (loop . dequeue q)
 
-runLeft :: KnownNat (Size left) => (a -> Effect right b) -> (forall result . Union left result -> (result -> Effect right b) -> Effect right b) -> Effect (left ':+: right) a -> Effect right b
+runLeft :: KnownNat (Size left) => (a -> Effect right b) -> (forall result . Union left result -> (result -> Effect right b) -> Effect right b) -> Effect (left :+: right) a -> Effect right b
 runLeft pure' bind = loop
   where loop (Pure a) = pure' a
         loop (Effect u q) = case decompose u of
           Left  u' -> bind   u'              (loop . dequeue q)
           Right u' -> Effect u' (unit (Arrow (loop . dequeue q)))
 
-runSingletonState :: state -> (state -> a -> b) -> (forall result . state -> eff result -> (state -> result -> b) -> b) -> Effect ('S eff) a -> b
+runSingletonState :: state -> (state -> a -> b) -> (forall result . state -> eff result -> (state -> result -> b) -> b) -> Effect (S eff) a -> b
 runSingletonState state pure' bind = loop state
   where loop state (Pure a)     = pure' state a
         loop state (Effect u q) = bind state (strengthenSingleton u) (\ state' -> loop state' . dequeue q)

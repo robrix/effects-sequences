@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, FlexibleContexts, GADTs #-}
+{-# LANGUAGE FlexibleContexts, GADTs #-}
 module Control.Effect.Nondeterminism
 ( Nondeterminism(..)
 , msplit
@@ -40,7 +40,7 @@ once :: Member Nondeterminism effects => Effect effects a -> Effect effects a
 once m = msplit m >>= maybe empty (pure . fst)
 
 
-runNondeterminism :: Alternative f => Effect ('S Nondeterminism) a -> f a
+runNondeterminism :: Alternative f => Effect (S Nondeterminism) a -> f a
 runNondeterminism = handleEffect pure (\ eff yield -> case eff of
   Zero -> empty
   Plus -> yield True <|> yield False)

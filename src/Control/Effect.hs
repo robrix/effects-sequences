@@ -1,3 +1,4 @@
+{-# LANGUAGE ExplicitNamespaces #-}
 module Control.Effect
 ( Effect
 -- * Constructing effects
@@ -12,7 +13,9 @@ module Control.Effect
 , interposeSplit
 -- * Unions
 , Member
-, Seq(..)
+, Seq
+, S
+, type (:+:)
 ) where
 
 import Control.Effect.Internal

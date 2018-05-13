@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, FlexibleContexts, GADTs, StandaloneDeriving #-}
+{-# LANGUAGE FlexibleContexts, GADTs, StandaloneDeriving #-}
 module Control.Effect.State where
 
 import Control.Effect
@@ -24,7 +24,7 @@ modify' f = do
   put $! f state
 
 
-runState :: state -> Effect ('S (State state)) a -> (a, state)
+runState :: state -> Effect (S (State state)) a -> (a, state)
 runState state = runSingletonState state (flip (,)) (\ state eff yield -> case eff of
   Get -> yield state state
   Put state' -> yield state' ())

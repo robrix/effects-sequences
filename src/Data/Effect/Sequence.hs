@@ -6,6 +6,9 @@ import GHC.TypeLits
 -- | Non-empty sequences, represented as binary trees.
 data Seq a = S a | Seq a :+: Seq a
 
+type S = 'S
+type l :+: r = l ':+: r
+
 type family Size (ts :: Seq k) where
   Size ('S _)            = 1
   Size (left ':+: right) = Size left + Size right

@@ -1,6 +1,8 @@
 {-# LANGUAGE AllowAmbiguousTypes, ConstraintKinds, DataKinds, ExistentialQuantification, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables, TypeApplications, TypeFamilies, TypeOperators, UndecidableInstances #-}
 module Data.Effect.Union
-( Seq(..)
+( Seq
+, S
+, type (:+:)
 , Union
 , Member
 , inject
@@ -21,7 +23,7 @@ import Unsafe.Coerce
 
 data Union (members :: Seq (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
 
-type Member member = Subseq ('S member)
+type Member member = Subseq (S member)
 
 inject :: Member member members => member a -> Union members a
 inject = weaken . weakenSingleton
@@ -30,10 +32,10 @@ project :: Member member members => Union members a -> Maybe (member a)
 project = fmap strengthenSingleton . strengthen
 
 
-weakenSingleton :: member a -> Union ('S member) a
+weakenSingleton :: member a -> Union (S member) a
 weakenSingleton = Union 0
 
-strengthenSingleton :: Union ('S member) a -> member a
+strengthenSingleton :: Union (S member) a -> member a
 strengthenSingleton (Union _ member) = unsafeCoerce member
 
 
@@ -48,7 +50,7 @@ class Subseq sub super where
   weaken     :: Union sub   a ->        Union super a
   strengthen :: Union super a -> Maybe (Union sub   a)
 
-instance Subseq ('S member) ('S member) where
+instance Subseq (S member) (S member) where
   weaken = id
   strengthen = Just
 
@@ -81,13 +83,13 @@ weakenRight :: forall left right a . KnownNat (Size left) => Union right a -> Un
 weakenRight (Union n t) = Union (size @left + n) t
 
 
-instance Show (member a) => Show (Union ('S member) a) where
+instance Show (member a) => Show (Union (S member) a) where
   showsPrec d = showsPrec d . strengthenSingleton
 
 instance (KnownNat (Size left), Show (Union left a), Show (Union right a)) => Show (Union (left ':+: right) a) where
   showsPrec d = either (showsPrec d) (showsPrec d) . decompose
 
-instance Show1 member => Show1 (Union ('S member)) where
+instance Show1 member => Show1 (Union (S member)) where
   liftShowsPrec sp sl d = liftShowsPrec sp sl d . strengthenSingleton
 
 instance (KnownNat (Size left), Show1 (Union left), Show1 (Union right)) => Show1 (Union (left ':+: right)) where
