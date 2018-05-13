@@ -1,4 +1,4 @@
-{-# LANGUAGE AllowAmbiguousTypes, ConstraintKinds, DataKinds, ExistentialQuantification, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables, TypeApplications, TypeFamilies, TypeOperators, UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes, ConstraintKinds, DataKinds, ExistentialQuantification, FlexibleContexts, FlexibleInstances, FunctionalDependencies, ScopedTypeVariables, TypeApplications, TypeFamilies, TypeOperators, UndecidableInstances #-}
 module Data.Effect.Union
 ( Seq
 , S
@@ -73,14 +73,14 @@ instance (SubseqAt rest sub right, KnownNat (Size left)) => SubseqAt ('R ': rest
   strengthenAt = either (const Nothing) (strengthenAt @rest) . decompose
 
 
-class (Subseq sub super, Subseq sub' super') => Replace sub sub' super super' where
+class (Subseq sub super, Subseq sub' super') => Replace sub sub' super super' | sub sub' super -> super', sub super super' -> sub', sub sub' super' -> super, sub' super super' -> sub where
   replace :: (Union sub a -> Union sub' a) -> Union super a -> Union super' a
 
 instance (PathTo sub super ~ path, PathTo sub' super' ~ path, SubseqAt path sub super, SubseqAt path sub' super', ReplaceAt path sub sub' super super') => Replace sub sub' super super' where
   replace = replaceAt @path
 
 
-class ReplaceAt (path :: [Side]) sub sub' super super' where
+class ReplaceAt (path :: [Side]) sub sub' super super' | sub sub' super -> super', sub super super' -> sub', sub sub' super' -> super, sub' super super' -> sub where
   replaceAt :: (Union sub a -> Union sub' a) -> Union super a -> Union super' a
 
 instance ReplaceAt '[] sub sub' sub sub' where
