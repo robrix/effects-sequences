@@ -95,3 +95,6 @@ data Nondeterminism result where
   Plus :: Nondeterminism Bool
 
 deriving instance Show (Nondeterminism result)
+
+instance Show1 Nondeterminism where
+  liftShowsPrec _ _ = showsPrec
