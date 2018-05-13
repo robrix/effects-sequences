@@ -25,6 +25,14 @@ run (Pure a)     = a
 run (Effect _ _) = error "impossible"
 
 
+dequeue :: Queue effects a b -> a -> Effect effects b
+dequeue q' x = case tviewl q' of
+  TAEmptyL -> pure x
+  k :< t   -> case runArrow k x of
+    Pure y -> dequeue t y
+    Effect u q -> Effect u (t <<< q)
+
+
 newtype Arrow effects a b = Arrow { runArrow :: a -> Effect effects b }
   deriving (Functor)
 
