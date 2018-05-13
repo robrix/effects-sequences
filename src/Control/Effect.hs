@@ -8,6 +8,7 @@ module Control.Effect
 , interpose
 -- * Unions
 , Member
+, Set(..)
 ) where
 
 import Control.Effect.Internal
