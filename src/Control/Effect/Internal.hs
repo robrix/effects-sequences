@@ -10,6 +10,7 @@ module Control.Effect.Internal
 , reinterpretEffects
 , handleEffect
 , handleStatefulEffect
+, reinterpretEffect
 , interpose
 , interposeState
 , interposeSplit
@@ -72,6 +73,10 @@ handleEffect pure' bind = handleEffects pure' (bind . strengthenSingleton)
 
 handleStatefulEffect :: state -> (state -> a -> b) -> (forall result . state -> effect result -> (state -> result -> b) -> b) -> Effect (S effect) a -> b
 handleStatefulEffect state pure' bind = handleStatefulEffects state pure' (\ state' -> bind state' . strengthenSingleton)
+
+
+reinterpretEffect :: Replace (S effect) sub' super super' => (a -> Effect super' a') -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+reinterpretEffect pure' bind = reinterpretEffects pure' (bind . strengthenSingleton)
 
 
 interpose :: Member effect effects => (a -> Effect effects b) -> (forall result . effect result -> (result -> Effect effects b) -> Effect effects b) -> Effect effects a -> Effect effects b
