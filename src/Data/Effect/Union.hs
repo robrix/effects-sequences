@@ -55,7 +55,7 @@ instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super 
   strengthen = strengthenAt @path
 
 
-class SubseqAt (side :: [Side]) sub super where
+class SubseqAt (path :: [Side]) sub super where
   weakenAt :: Union sub a -> Union super a
   strengthenAt :: Union super a -> Maybe (Union sub a)
 
