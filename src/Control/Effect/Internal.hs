@@ -44,7 +44,7 @@ send effect = Effect (inject effect) id
 
 
 runM :: Monad m => Effect ('S m) a -> m a
-runM = handleEffects pure ((>>=) . strengthenSingleton)
+runM = handleEffect pure (>>=)
 
 
 handleEffect :: (a -> b) -> (forall result . effect result -> (result -> b) -> b) -> Effect ('S effect) a -> b
