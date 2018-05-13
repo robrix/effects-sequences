@@ -13,3 +13,6 @@ get = send Get
 
 put :: Member (State state) effects => state -> Effect effects ()
 put = send . Put
+
+modify :: Member (State state) effects => (state -> state) -> Effect effects ()
+modify f = get >>= put . f
