@@ -9,6 +9,7 @@ module Control.Effect.Internal
 , runSingletonState
 , interpose
 , interposeState
+, interposeSplit
 -- * Queues
 , Queue(..)
 , unit
@@ -87,6 +88,17 @@ interposeState initial pure' bind = loop initial
           _      -> Effect u (unit (Arrow (k state)))
           where k state' = loop state' . dequeue q
 
+interposeSplit :: Member effect effects
+               => state
+               -> (state -> a -> Effect effects b)
+               -> (forall result . state -> effect result -> (result -> Effect effects a) -> (state -> Effect effects a -> Effect effects b) -> Effect effects b)
+               -> Effect effects a
+               -> Effect effects b
+interposeSplit initial pure' bind = loop initial
+  where loop state (Pure a)     = pure' state a
+        loop state (Effect u q) = case project u of
+          Just effect -> bind state effect (dequeue q) loop
+          _           -> Effect u (unit (Arrow (loop state . dequeue q)))
 
 newtype Queue effects a b = Queue (TA.BinaryTree (Arrow effects) a b)
   deriving (Show)
