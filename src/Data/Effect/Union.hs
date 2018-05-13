@@ -76,6 +76,16 @@ instance (SubseqAt rest sub right, KnownNat (Size left)) => SubseqAt ('R ': rest
 class Replace sub sub' super super' where
   replace :: (Union sub a -> Union sub' a) -> Union super a -> Union super' a
 
+instance (PathTo sub super ~ path, ReplaceAt path sub sub' super super') => Replace sub sub' super super' where
+  replace = replaceAt @path
+
+
+class ReplaceAt (path :: [Side]) sub sub' super super' where
+  replaceAt :: (Union sub a -> Union sub' a) -> Union super a -> Union super' a
+
+instance ReplaceAt '[] sub sub' sub sub' where
+  replaceAt = ($)
+
 
 weakenLeft :: Union left a -> Union (left ':+: right) a
 weakenLeft (Union n t) = Union n t
