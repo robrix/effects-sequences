@@ -9,6 +9,13 @@ module Control.Effect.Internal
 , runSingletonState
 , interpose
 , interposeState
+-- * Queues
+, Queue(..)
+, unit
+, (|>)
+, dequeue
+-- * Arrows
+, Arrow(..)
 -- * Effects
 , Nondeterminism(..)
 , Fail(..)
