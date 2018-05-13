@@ -21,12 +21,12 @@ import Unsafe.Coerce
 
 data Union (members :: Seq (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
 
-type Member effect = Subseq ('S effect)
+type Member member = Subseq ('S member)
 
-inject :: Member effect effects => effect a -> Union effects a
+inject :: Member member members => member a -> Union members a
 inject = weaken . weakenSingleton
 
-project :: Member effect effects => Union effects a -> Maybe (effect a)
+project :: Member member members => Union members a -> Maybe (member a)
 project = fmap strengthenSingleton . strengthen
 
 
