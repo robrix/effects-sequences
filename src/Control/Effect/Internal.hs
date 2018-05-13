@@ -1,11 +1,11 @@
-{-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, RankNTypes, StandaloneDeriving, TypeOperators, UndecidableInstances #-}
+{-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, MultiParamTypeClasses, RankNTypes, StandaloneDeriving, TypeOperators, UndecidableInstances #-}
 module Control.Effect.Internal
 ( Effect
 -- * Constructing effects
 , send
 -- * Handlers
 , runM
-, runSingleton
+, Handle(..)
 , runSingletonState
 , interpose
 -- * Effects
@@ -34,6 +34,13 @@ send effect = Effect (inject effect) id
 runM :: Monad m => Effect ('S m) a -> m a
 runM (Pure a)     = pure a
 runM (Effect u q) = strengthenSingleton u >>= runM . dequeue q
+
+
+class Handle effects where
+  handleEffect :: (a -> b) -> (forall result . Union effects result -> (result -> b) -> b) -> Effect effects a -> b
+
+instance Handle ('S effect) where
+  handleEffect = runSingleton
 
 
 runSingleton :: (a -> b) -> (forall result . Union ('S effect) result -> (result -> b) -> b) -> Effect ('S effect) a -> b

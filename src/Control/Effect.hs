@@ -4,7 +4,7 @@ module Control.Effect
 , send
 -- * Handlers
 , runM
-, runSingleton
+, Handle(..)
 , runSingletonState
 , interpose
 -- * Unions
