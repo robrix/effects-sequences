@@ -2,7 +2,6 @@
 module Control.Effect.Reader where
 
 import Control.Effect
-import Data.Effect.Union
 import Data.Functor.Classes (Show1(..))
 
 data Reader context result where
@@ -21,7 +20,7 @@ local f m = do
 
 
 runReader :: context -> Effect ('S (Reader context)) a -> a
-runReader context = handleEffects id (\ u yield -> case strengthenSingleton u of Reader -> yield context)
+runReader context = handleEffect id (\ Reader yield -> yield context)
 
 
 deriving instance Show (Reader context result)

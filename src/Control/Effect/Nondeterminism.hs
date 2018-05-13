@@ -12,7 +12,6 @@ module Control.Effect.Nondeterminism
 import Control.Applicative
 import Control.Effect
 import Control.Effect.Internal
-import Data.Effect.Union
 import Data.Foldable (asum)
 
 msplit :: Member Nondeterminism effects => Effect effects a -> Effect effects (Maybe (a, Effect effects a))
@@ -42,6 +41,6 @@ once m = msplit m >>= maybe empty (pure . fst)
 
 
 runNondeterminism :: Alternative f => Effect ('S Nondeterminism) a -> f a
-runNondeterminism = handleEffects pure (\ eff yield -> case strengthenSingleton eff of
+runNondeterminism = handleEffect pure (\ eff yield -> case eff of
   Zero -> empty
   Plus -> yield True <|> yield False)

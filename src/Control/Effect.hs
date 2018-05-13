@@ -4,6 +4,7 @@ module Control.Effect
 , send
 -- * Handlers
 , runM
+, handleEffect
 , Handle(..)
 , runSingletonState
 , interpose
