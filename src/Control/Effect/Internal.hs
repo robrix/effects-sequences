@@ -34,6 +34,11 @@ runSingleton pure' bind = loop
   where loop (Pure a)     = pure' a
         loop (Effect u q) = bind (strengthenSingleton u) (loop . dequeue q)
 
+runSingletonState :: state -> (state -> a -> b) -> (forall result . state -> eff result -> (state -> result -> b) -> b) -> Effect ('S eff) a -> b
+runSingletonState state pure' bind = loop state
+  where loop state (Pure a)     = pure' state a
+        loop state (Effect u q) = bind state (strengthenSingleton u) (\ state' -> loop state' . dequeue q)
+
 
 interpose :: Member effect effects => (a -> Effect effects b) -> (forall result . effect result -> (result -> Effect effects b) -> Effect effects b) -> Effect effects a -> Effect effects b
 interpose pure' bind = loop

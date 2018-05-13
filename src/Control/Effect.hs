@@ -6,6 +6,7 @@ module Control.Effect
 , run
 , runM
 , runSingleton
+, runSingletonState
 , interpose
 -- * Unions
 , Member
