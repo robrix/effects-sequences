@@ -12,7 +12,7 @@ module Data.Effect.Union
 ) where
 
 import Data.Effect.BinaryTree
-import Data.Functor.Classes (Show1(..), showsBinaryWith)
+import Data.Functor.Classes (Show1(..))
 import Data.Kind (Type)
 import GHC.TypeLits
 import Unsafe.Coerce
@@ -80,7 +80,7 @@ weakenRight (Union n t) = Union (size @left + n) t
 
 
 instance Show (member a) => Show (Union ('S member) a) where
-  showsPrec d u@(Union n _) = showsBinaryWith showsPrec showsPrec "Union" d n (strengthenSingleton u)
+  showsPrec d = showsPrec d . strengthenSingleton
 
 instance (KnownNat (Size left), Show (Union left a), Show (Union right a)) => Show (Union (left ':+: right) a) where
   showsPrec d = either (showsPrec d) (showsPrec d) . decompose
