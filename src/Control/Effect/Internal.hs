@@ -7,7 +7,7 @@ import Control.Monad ((<=<))
 import Data.Bool (bool)
 import Data.Effect.Union
 import Data.Functor.Classes (Show1(..), showsBinaryWith, showsUnaryWith)
-import Data.TASequence.BinaryTree
+import qualified Data.TASequence.BinaryTree as TA
 import Prelude hiding (id, (.))
 
 data Effect effects result
@@ -33,18 +33,31 @@ interpose pure' bind = loop
   where loop (Pure a)           = pure' a
         loop (Effect u q)
           | Just x <- project u = bind x k
-          | otherwise           = Effect u (tsingleton (Arrow k))
+          | otherwise           = Effect u (unit (Arrow k))
           where k = loop . dequeue q
 
 
-type Queue effects = BinaryTree (Arrow effects)
+newtype Queue effects a b = Queue (TA.BinaryTree (Arrow effects) a b)
+  deriving (Show)
+
+instance Category (Queue effects) where
+  id = Queue id
+  Queue TA.Empty . q              = q
+  q              . Queue TA.Empty = q
+  Queue q1       . Queue q2       = Queue (q1 <<< q2)
+
+unit :: Arrow effects a b -> Queue effects a b
+unit = Queue . TA.tsingleton
+
+(|>) :: Queue effects a b -> Arrow effects b c -> Queue effects a c
+Queue q |> a = Queue (q TA.|> a)
 
 dequeue :: Queue effects a b -> a -> Effect effects b
-dequeue q' x = case tviewl q' of
-  TAEmptyL -> pure x
-  k :< t   -> case runArrow k x of
-    Pure y -> dequeue t y
-    Effect u q -> Effect u (t <<< q)
+dequeue (Queue q) x = case TA.tviewl q of
+  TA.TAEmptyL -> pure x
+  k TA.:< t   -> case runArrow k x of
+    Pure y     -> dequeue (Queue t) y
+    Effect u q -> Effect u (q >>> Queue t)
 
 
 newtype Arrow effects a b = Arrow { runArrow :: a -> Effect effects b }
