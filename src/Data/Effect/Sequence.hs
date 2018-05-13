@@ -38,3 +38,9 @@ type family PathTo' (side :: Side) (sub :: Seq k) (super :: Seq k) :: Maybe [Sid
   PathTo' side sub sub              = 'Just '[side]
   PathTo' side sub (left :+: right) = 'Just (side ': FromJust (PathTo' 'L sub left <> PathTo' 'R sub right))
   PathTo' _    _   _                = 'Nothing
+
+
+type family Path (path :: [Side]) :: Nat where
+  Path '[] = 0
+  Path ('L ': p) = 0 + (2 * Path p)
+  Path ('R ': p) = 1 + (2 * Path p)
