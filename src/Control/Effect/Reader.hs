@@ -21,7 +21,7 @@ local f m = do
 
 
 runReader :: context -> Effect ('S (Reader context)) a -> a
-runReader context = handleEffect id (\ u yield -> case strengthenSingleton u of Reader -> yield context)
+runReader context = handleEffects id (\ u yield -> case strengthenSingleton u of Reader -> yield context)
 
 
 deriving instance Show (Reader context result)

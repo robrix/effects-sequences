@@ -43,14 +43,14 @@ send effect = Effect (inject effect) id
 
 
 runM :: Monad m => Effect ('S m) a -> m a
-runM = handleEffect pure ((>>=) . strengthenSingleton)
+runM = handleEffects pure ((>>=) . strengthenSingleton)
 
 
 class Handle effects where
-  handleEffect :: (a -> b) -> (forall result . Union effects result -> (result -> b) -> b) -> Effect effects a -> b
+  handleEffects :: (a -> b) -> (forall result . Union effects result -> (result -> b) -> b) -> Effect effects a -> b
 
 instance Handle ('S effect) where
-  handleEffect pure' bind = loop
+  handleEffects pure' bind = loop
     where loop (Pure a)     = pure' a
           loop (Effect u q) = bind u (loop . dequeue q)
 
