@@ -94,6 +94,10 @@ weakenRight :: forall left right a . KnownNat (Size left) => Union right a -> Un
 weakenRight (Union n t) = Union (size @left + n) t
 
 
+replaceLeft :: (KnownNat (Size left), KnownNat (Size left')) => (Union left a -> Union left' a) -> Union (left ':+: right) a ->  Union (left' ':+: right) a
+replaceLeft f = either (weakenLeft . f) weakenRight . decompose
+
+
 instance Show (member a) => Show (Union (S member) a) where
   showsPrec d = showsPrec d . strengthenSingleton
 
