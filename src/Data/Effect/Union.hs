@@ -50,30 +50,26 @@ class Subseq sub super where
   weaken     :: Union sub   a ->        Union super a
   strengthen :: Union super a -> Maybe (Union sub   a)
 
-instance Subseq (S member) (S member) where
-  weaken = id
-  strengthen = Just
-
-instance Subseq (left ':+: right) (left ':+: right) where
-  weaken = id
-  strengthen = Just
-
-instance (FromJust (Find ('Just 'L) sub left <> Find ('Just 'R) sub right) ~ side, SubseqOn side sub (left ':+: right)) => Subseq sub (left ':+: right) where
-  weaken = weakenOn @side
-  strengthen = strengthenOn @side
+instance (Path sub super ~ path, SubseqAt path sub super) => Subseq sub super where
+  weaken = weakenAt @path
+  strengthen = strengthenAt @path
 
 
-class SubseqOn (side :: Side) sub super where
-  weakenOn :: Union sub a -> Union super a
-  strengthenOn :: Union super a -> Maybe (Union sub a)
+class SubseqAt (side :: [Side]) sub super where
+  weakenAt :: Union sub a -> Union super a
+  strengthenAt :: Union super a -> Maybe (Union sub a)
 
-instance (Subseq sub left, KnownNat (Size left)) => SubseqOn 'L sub (left ':+: right) where
-  weakenOn = weakenLeft . weaken
-  strengthenOn = either strengthen (const Nothing) . decompose
+instance SubseqAt '[] sub sub where
+  weakenAt     = id
+  strengthenAt = Just
 
-instance (Subseq sub right, KnownNat (Size left)) => SubseqOn 'R sub (left ':+: right) where
-  weakenOn = weakenRight . weaken
-  strengthenOn = either (const Nothing) strengthen . decompose
+instance (SubseqAt rest sub left, KnownNat (Size left)) => SubseqAt ('L ': rest) sub (left ':+: right) where
+  weakenAt     = weakenLeft . weakenAt @rest
+  strengthenAt = either (strengthenAt @rest) (const Nothing) . decompose
+
+instance (SubseqAt rest sub right, KnownNat (Size left)) => SubseqAt ('R ': rest) sub (left ':+: right) where
+  weakenAt     = weakenRight . weakenAt @rest
+  strengthenAt = either (const Nothing) (strengthenAt @rest) . decompose
 
 
 weakenLeft :: Union left a -> Union (left ':+: right) a
