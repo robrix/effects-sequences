@@ -32,8 +32,7 @@ send effect = Effect (inject effect) id
 
 
 runM :: Monad m => Effect ('S m) a -> m a
-runM (Pure a)     = pure a
-runM (Effect u q) = strengthenSingleton u >>= runM . dequeue q
+runM = handleEffect pure ((>>=) . strengthenSingleton)
 
 
 class Handle effects where
