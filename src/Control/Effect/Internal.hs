@@ -1,5 +1,16 @@
 {-# LANGUAGE DataKinds, DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, RankNTypes, StandaloneDeriving, TypeOperators, UndecidableInstances #-}
-module Control.Effect.Internal where
+module Control.Effect.Internal
+( Effect
+-- * Constructing effects
+, send
+-- * Handlers
+, runM
+, runSingleton
+, runSingletonState
+, interpose
+-- * Effects
+, Nondeterminism(..)
+) where
 
 import Control.Applicative
 import qualified Control.Arrow as A
