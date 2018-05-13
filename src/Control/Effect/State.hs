@@ -16,3 +16,8 @@ put = send . Put
 
 modify :: Member (State state) effects => (state -> state) -> Effect effects ()
 modify f = get >>= put . f
+
+modify' :: Member (State state) effects => (state -> state) -> Effect effects ()
+modify' f = do
+  state <- get
+  put $! f state
