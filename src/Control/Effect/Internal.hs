@@ -6,6 +6,7 @@ import Control.Category
 import Control.Monad ((<=<))
 import Data.Bool (bool)
 import Data.Effect.Union
+import Data.Functor.Classes (Show1(..), showsBinaryWith, showsUnaryWith)
 import Data.TASequence.BinaryTree
 import Prelude hiding (id, (.))
 
@@ -80,6 +81,13 @@ instance Monad (Effect effects) where
   return = pure
   Pure a     >>= f = f a
   Effect u q >>= f = Effect u (q |> Arrow f)
+
+instance (Show result, Show1 (Union effects)) => Show (Effect effects result) where
+  showsPrec d eff = case eff of
+    Pure a     -> showsUnaryWith showsPrec "Pure" d a
+    Effect u q -> showsBinaryWith (liftShowsPrec hide hideList) showsPrec "Effect" d u q
+    where hide = const (const (showString ""))
+          hideList = const (showString "")
 
 
 data Nondeterminism result where
