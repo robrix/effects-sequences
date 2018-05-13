@@ -14,8 +14,6 @@ data Effect effects result
   = Pure result
   | forall incremental . Effect (Union effects incremental) (Queue effects incremental result)
 
-type Queue effects = BinaryTree (Arrow effects)
-
 
 send :: Member effect effects => effect return -> Effect effects return
 send effect = Effect (inject effect) id
@@ -38,6 +36,8 @@ interpose pure' bind = loop
           | otherwise           = Effect u (tsingleton (Arrow k))
           where k = loop . dequeue q
 
+
+type Queue effects = BinaryTree (Arrow effects)
 
 dequeue :: Queue effects a b -> a -> Effect effects b
 dequeue q' x = case tviewl q' of
