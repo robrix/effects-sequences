@@ -17,6 +17,7 @@ library
   exposed-modules:     Control.Effect
                      , Control.Effect.Internal
                      , Control.Effect.Reader
+                     , Control.Effect.State
                      , Data.Effect.BinaryTree
                      , Data.Effect.Union
   build-depends:       base >=4.11 && <4.12
