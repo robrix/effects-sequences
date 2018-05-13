@@ -50,7 +50,8 @@ unit :: Arrow effects a b -> Queue effects a b
 unit = Queue . TA.tsingleton
 
 (|>) :: Queue effects a b -> Arrow effects b c -> Queue effects a c
-Queue q |> a = Queue (q TA.|> a)
+Queue TA.Empty |> a = unit a
+Queue q        |> a = Queue (q TA.|> a)
 
 dequeue :: Queue effects a b -> a -> Effect effects b
 dequeue (Queue q) x = case TA.tviewl q of
