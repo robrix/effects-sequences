@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, GADTs #-}
+{-# LANGUAGE FlexibleContexts, GADTs, StandaloneDeriving #-}
 module Control.Effect.State where
 
 import Control.Effect
@@ -21,3 +21,6 @@ modify' :: Member (State state) effects => (state -> state) -> Effect effects ()
 modify' f = do
   state <- get
   put $! f state
+
+
+deriving instance Show state => Show (State state result)
