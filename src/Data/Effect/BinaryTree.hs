@@ -3,10 +3,9 @@ module Data.Effect.BinaryTree where
 
 import GHC.TypeLits
 
-data Seq a = Z | S a | Seq a :+: Seq a
+data Seq a = S a | Seq a :+: Seq a
 
 type family Size (ts :: Seq k) where
-  Size 'Z                = 0
   Size ('S _)            = 1
   Size (left ':+: right) = Size left + Size right
 
