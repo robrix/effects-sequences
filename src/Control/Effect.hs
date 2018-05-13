@@ -9,7 +9,7 @@ module Control.Effect
 , interpose
 -- * Unions
 , Member
-, Set(..)
+, Seq(..)
 ) where
 
 import Control.Effect.Internal

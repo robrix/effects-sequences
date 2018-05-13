@@ -1,6 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes, ConstraintKinds, DataKinds, ExistentialQuantification, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables, TypeApplications, TypeFamilies, TypeOperators, UndecidableInstances #-}
 module Data.Effect.Union
-( Set(..)
+( Seq(..)
 , Union
 , Member
 , inject
@@ -17,7 +17,7 @@ import Data.Kind (Type)
 import GHC.TypeLits
 import Unsafe.Coerce
 
-data Union (members :: Set (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
+data Union (members :: Seq (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
 
 type Member effect = Subset ('S effect)
 

@@ -3,9 +3,9 @@ module Data.Effect.BinaryTree where
 
 import GHC.TypeLits
 
-data Set a = Z | S a | Set a :+: Set a
+data Seq a = Z | S a | Seq a :+: Seq a
 
-type family Size (ts :: Set k) where
+type family Size (ts :: Seq k) where
   Size 'Z                = 0
   Size ('S _)            = 1
   Size (left ':+: right) = Size left + Size right
@@ -16,7 +16,7 @@ size = fromInteger (natVal (undefined :: proxy (Size tree)))
 
 data Side = L | R
 
-type family Find (side :: Maybe Side) (sub :: Set k) (super :: Set k) :: Maybe Side where
+type family Find (side :: Maybe Side) (sub :: Seq k) (super :: Seq k) :: Maybe Side where
   Find side sub sub               = side
   Find side sub (left ':+: right) = Find side sub left <> Find side sub right
   Find _    _   _                 = 'Nothing
