@@ -20,10 +20,6 @@ send :: Member effect effects => effect return -> Effect effects return
 send effect = Effect (inject effect) id
 
 
-run :: Effect 'Z a -> a
-run (Pure a)     = a
-run (Effect _ _) = error "impossible"
-
 runM :: Monad m => Effect ('S m) a -> m a
 runM (Pure a)     = pure a
 runM (Effect u q) = strengthenSingleton u >>= runM . dequeue q

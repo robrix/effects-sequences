@@ -3,7 +3,6 @@ module Control.Effect
 -- * Constructing effects
 , send
 -- * Handlers
-, run
 , runM
 , runSingleton
 , runSingletonState
