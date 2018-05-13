@@ -138,6 +138,9 @@ instance Monad (Effect effects) where
   Pure a     >>= f = f a
   Effect u q >>= f = Effect u (q |> Arrow f)
 
+instance Member Fail effects => MonadFail (Effect effects) where
+  fail = send . Fail
+
 instance (Show result, Show1 (Union effects)) => Show (Effect effects result) where
   showsPrec d eff = case eff of
     Pure a     -> showsUnaryWith showsPrec "Pure" d a
