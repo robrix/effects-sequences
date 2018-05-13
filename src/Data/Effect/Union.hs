@@ -56,20 +56,20 @@ instance Subseq (left ':+: right) (left ':+: right) where
   weaken = id
   strengthen = Just
 
-instance (FromJust (Find ('Just 'L) sub left <> Find ('Just 'R) sub right) ~ side, SubsetOn side sub (left ':+: right)) => Subseq sub (left ':+: right) where
+instance (FromJust (Find ('Just 'L) sub left <> Find ('Just 'R) sub right) ~ side, SubseqOn side sub (left ':+: right)) => Subseq sub (left ':+: right) where
   weaken = weakenOn @side
   strengthen = strengthenOn @side
 
 
-class SubsetOn (side :: Side) sub super where
+class SubseqOn (side :: Side) sub super where
   weakenOn :: Union sub a -> Union super a
   strengthenOn :: Union super a -> Maybe (Union sub a)
 
-instance (Subseq sub left, KnownNat (Size left)) => SubsetOn 'L sub (left ':+: right) where
+instance (Subseq sub left, KnownNat (Size left)) => SubseqOn 'L sub (left ':+: right) where
   weakenOn = weakenLeft . weaken
   strengthenOn = either strengthen (const Nothing) . decompose
 
-instance (Subseq sub right, KnownNat (Size left)) => SubsetOn 'R sub (left ':+: right) where
+instance (Subseq sub right, KnownNat (Size left)) => SubseqOn 'R sub (left ':+: right) where
   weakenOn = weakenRight . weaken
   strengthenOn = either (const Nothing) strengthen . decompose
 
