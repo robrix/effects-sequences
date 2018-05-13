@@ -86,6 +86,9 @@ class ReplaceAt (path :: [Side]) sub sub' super super' where
 instance ReplaceAt '[] sub sub' sub sub' where
   replaceAt = ($)
 
+instance (KnownNat (Size left), KnownNat (Size left'), ReplaceAt rest sub sub' left left') => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left' ':+: right) where
+  replaceAt = replaceLeft . replaceAt @rest
+
 
 weakenLeft :: Union left a -> Union (left ':+: right) a
 weakenLeft (Union n t) = Union n t
