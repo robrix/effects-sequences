@@ -32,6 +32,11 @@ runState state = handleStatefulEffect state (flip (,)) (\ state eff yield -> cas
   Get -> yield state state
   Put state' -> yield state' ())
 
+reinterpretState :: Effect (S (State state)) a -> Effect (S (Reader state) :+: S (Writer state)) a
+reinterpretState = handleEffect pure (\ eff yield -> case eff of
+  Get -> ask >>= yield
+  Put s -> tell s >>= yield)
+
 runStateRW :: state -> Effect (S (Reader state) :+: S (Writer state)) a -> (a, state)
 runStateRW state = handleStatefulEffects state (flip (,)) (\ state effs yield -> case decompose effs of
   Left  (strengthenSingleton -> Ask)         -> yield state state
