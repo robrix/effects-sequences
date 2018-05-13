@@ -87,3 +87,6 @@ instance (KnownNat (Size left), Show (Union left a), Show (Union right a)) => Sh
 
 instance Show1 member => Show1 (Union ('S member)) where
   liftShowsPrec sp sl d = liftShowsPrec sp sl d . strengthenSingleton
+
+instance (KnownNat (Size left), Show1 (Union left), Show1 (Union right)) => Show1 (Union (left ':+: right)) where
+  liftShowsPrec sp sl d = either (liftShowsPrec sp sl d) (liftShowsPrec sp sl d) . decompose
