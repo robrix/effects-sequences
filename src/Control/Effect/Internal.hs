@@ -16,7 +16,8 @@ module Control.Effect.Internal
 import Control.Applicative
 import qualified Control.Arrow as A
 import Control.Category
-import Control.Monad ((<=<))
+import Control.Monad (MonadPlus(..), (<=<))
+import Control.Monad.Fail
 import Data.Bool (bool)
 import Data.Effect.Union
 import Data.Functor.Classes (Show1(..), showsBinaryWith, showsUnaryWith)
@@ -140,6 +141,10 @@ instance Monad (Effect effects) where
 
 instance Member Fail effects => MonadFail (Effect effects) where
   fail = send . Fail
+
+instance Member Nondeterminism effects => MonadPlus (Effect effects) where
+  mzero = empty
+  mplus = (<|>)
 
 instance (Show result, Show1 (Union effects)) => Show (Effect effects result) where
   showsPrec d eff = case eff of
