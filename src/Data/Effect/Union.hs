@@ -12,6 +12,7 @@ module Data.Effect.Union
 
 import Control.Monad ((<=<))
 import Data.Effect.BinaryTree
+import Data.Functor.Classes (showsBinaryWith)
 import Data.Kind (Type)
 import GHC.TypeLits
 import Unsafe.Coerce
@@ -81,3 +82,7 @@ strengthenRight (Union n member)
   | let left  = size @left
   , n >= left = Just (Union (n - left) member)
   | otherwise = Nothing
+
+
+instance Show (member a) => Show (Union ('S member) a) where
+  showsPrec d u@(Union n _) = showsBinaryWith showsPrec showsPrec "Union" d n (strengthenSingleton u)
