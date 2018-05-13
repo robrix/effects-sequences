@@ -92,7 +92,7 @@ instance ReplaceAt rest sub sub' left left' => ReplaceAt ('L ': rest) sub sub' (
   replaceAt = replaceLeft . replaceAt @rest
   splitAt   = either (Left . weakenLeft) Right . splitAt @rest @sub @sub' <=< splitLeft
 
-instance ReplaceAt rest sub sub' right right' => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left ':+: right') where
+instance ReplaceAt rest sub sub' right right' => ReplaceAt ('R ': rest) sub sub' (left ':+: right) (left ':+: right') where
   replaceAt = replaceRight . replaceAt @rest
   splitAt   = either (Left . weakenRight) Right . splitAt @rest @sub @sub' <=< splitRight
 
