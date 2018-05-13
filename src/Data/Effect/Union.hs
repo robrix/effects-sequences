@@ -96,7 +96,6 @@ instance (KnownNat (Size left), KnownNat (Size left'), ReplaceAt rest sub sub' l
   replaceAt = replaceLeft . replaceAt @rest
   splitAt   = either (Left . weakenLeft) Right . splitAt @rest @sub @sub' <=< splitLeft
 
-
 instance (KnownNat (Size left), ReplaceAt rest sub sub' right right') => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left ':+: right') where
   replaceAt = replaceRight . replaceAt @rest
   splitAt   = either (Left . weakenRight) Right . splitAt @rest @sub @sub' <=< splitRight
