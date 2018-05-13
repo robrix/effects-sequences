@@ -28,7 +28,6 @@ import qualified Control.Arrow as A
 import Control.Category
 import Control.Monad (MonadPlus(..), (<=<))
 import Control.Monad.Fail
-import Data.Bool (bool)
 import Data.Effect.Union
 import Data.Functor.Classes (Show1(..), showsBinaryWith, showsUnaryWith)
 import qualified Data.TASequence.BinaryTree as TA
@@ -164,7 +163,7 @@ instance Applicative (Effect effects) where
 
 instance Member Nondeterminism effects => Alternative (Effect effects) where
   empty = send Zero
-  l <|> r = send Plus >>= bool l r
+  l <|> r = send Plus >>= \ cond -> if cond then l else r
 
 instance Monad (Effect effects) where
   return = pure
