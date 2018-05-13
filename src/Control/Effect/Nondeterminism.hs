@@ -4,6 +4,7 @@ module Control.Effect.Nondeterminism
 , msplit
 , bagofN
 , ifte
+, once
 , runNondeterminism
 ) where
 
@@ -31,6 +32,9 @@ bagofN n        m          = msplit m >>= go
 ifte :: Member Nondeterminism effects => Effect effects a -> (a -> Effect effects b) -> Effect effects b -> Effect effects b
 ifte cond then' else' = msplit cond >>= maybe else' (uncurry bind)
   where bind a rest = then' a <|> (rest >>= then')
+
+once :: Member Nondeterminism effects => Effect effects a -> Effect effects a
+once m = msplit m >>= maybe empty (pure . fst)
 
 
 runNondeterminism :: Alternative f => Effect ('S Nondeterminism) a -> f a
