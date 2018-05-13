@@ -89,6 +89,9 @@ instance ReplaceAt '[] sub sub' sub sub' where
 instance (KnownNat (Size left), KnownNat (Size left'), ReplaceAt rest sub sub' left left') => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left' ':+: right) where
   replaceAt = replaceLeft . replaceAt @rest
 
+instance (KnownNat (Size left), ReplaceAt rest sub sub' right right') => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left ':+: right') where
+  replaceAt = replaceRight . replaceAt @rest
+
 
 weakenLeft :: Union left a -> Union (left ':+: right) a
 weakenLeft (Union n t) = Union n t
