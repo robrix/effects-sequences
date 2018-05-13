@@ -7,8 +7,10 @@ module Control.Effect
 , runM
 , handleEffect
 , handleStatefulEffect
+, reinterpretEffect
 , handleEffects
 , handleStatefulEffects
+, reinterpretEffects
 , interpose
 , interposeState
 , interposeSplit
