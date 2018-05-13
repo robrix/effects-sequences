@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, GADTs, ScopedTypeVariables, StandaloneDeriving #-}
+{-# LANGUAGE DataKinds, FlexibleContexts, GADTs, ScopedTypeVariables, StandaloneDeriving #-}
 module Control.Effect.Reader where
 
 import Control.Effect
@@ -17,6 +17,10 @@ local f m = do
       bind :: Reader context result -> (result -> Effect effects b) -> Effect effects b
       bind Reader yield = yield context'
   interpose pure bind m
+
+
+runReader :: context -> Effect ('S (Reader context)) a -> a
+runReader context = runSingleton id (\ Reader yield -> yield context)
 
 
 deriving instance Show (Reader context result)
