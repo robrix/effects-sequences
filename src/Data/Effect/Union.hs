@@ -7,6 +7,7 @@ module Data.Effect.Union
 , project
 , weakenSingleton
 , strengthenSingleton
+, decompose
 , Subset(..)
 ) where
 
@@ -35,6 +36,13 @@ weakenSingleton = Union 0
 
 strengthenSingleton :: Union ('S member) a -> member a
 strengthenSingleton (Union _ member) = unsafeCoerce member
+
+
+decompose :: forall left right a . KnownNat (Size left) => Union (left ':+: right) a -> Either (Union left a) (Union right a)
+decompose (Union n member)
+  | n < left  = Left  (Union n          member)
+  | otherwise = Right (Union (n - left) member)
+  where left = size @left
 
 
 class Subset sub super where
