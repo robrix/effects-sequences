@@ -3,6 +3,7 @@ module Control.Effect.Nondeterminism
 ( Nondeterminism(..)
 , msplit
 , bagofN
+, ifte
 , runNondeterminism
 ) where
 
@@ -26,6 +27,10 @@ bagofN (Just n) _ | n <= 0 = pure []
 bagofN n        m          = msplit m >>= go
   where go Nothing         = pure []
         go (Just (a, m'))  = (a:) <$> bagofN (pred <$> n) m'
+
+ifte :: Member Nondeterminism effects => Effect effects a -> (a -> Effect effects b) -> Effect effects b -> Effect effects b
+ifte cond then' else' = msplit cond >>= maybe else' (uncurry bind)
+  where bind a rest = then' a <|> (rest >>= then')
 
 
 runNondeterminism :: Alternative f => Effect ('S Nondeterminism) a -> f a
