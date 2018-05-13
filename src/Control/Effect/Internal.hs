@@ -36,10 +36,10 @@ runM (Pure a)     = pure a
 runM (Effect u q) = strengthenSingleton u >>= runM . dequeue q
 
 
-runSingleton :: (a -> b) -> (forall result . effect result -> (result -> b) -> b) -> Effect ('S effect) a -> b
+runSingleton :: (a -> b) -> (forall result . Union ('S effect) result -> (result -> b) -> b) -> Effect ('S effect) a -> b
 runSingleton pure' bind = loop
   where loop (Pure a)     = pure' a
-        loop (Effect u q) = bind (strengthenSingleton u) (loop . dequeue q)
+        loop (Effect u q) = bind u (loop . dequeue q)
 
 runLeft :: KnownNat (Size left) => (a -> Effect right b) -> (forall result . Union left result -> (result -> Effect right b) -> Effect right b) -> Effect (left ':+: right) a -> Effect right b
 runLeft pure' bind = loop
