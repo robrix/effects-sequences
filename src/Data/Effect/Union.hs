@@ -16,10 +16,12 @@ module Data.Effect.Union
 , Size
 ) where
 
+import Control.Monad ((<=<))
 import Data.Effect.Sequence
 import Data.Functor.Classes (Show1(..))
 import Data.Kind (Type)
 import GHC.TypeLits
+import Prelude hiding (splitAt)
 import Unsafe.Coerce
 
 data Union (members :: Seq (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
@@ -82,15 +84,20 @@ instance (PathTo sub super ~ path, PathTo sub' super' ~ path, SubseqAt path sub 
 
 class ReplaceAt (path :: [Side]) sub sub' super super' | sub sub' super -> super', sub super super' -> sub', sub sub' super' -> super, sub' super super' -> sub where
   replaceAt :: (Union sub a -> Union sub' a) -> Union super a -> Union super' a
+  splitAt   :: Union super a -> Either (Union super' a) (Union sub a)
 
 instance ReplaceAt '[] sub sub' sub sub' where
   replaceAt = ($)
+  splitAt   = Right
 
 instance (KnownNat (Size left), KnownNat (Size left'), ReplaceAt rest sub sub' left left') => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left' ':+: right) where
   replaceAt = replaceLeft . replaceAt @rest
+  splitAt   = either (Left . weakenLeft) Right . splitAt @rest @sub @sub' <=< splitLeft
+
 
 instance (KnownNat (Size left), ReplaceAt rest sub sub' right right') => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left ':+: right') where
   replaceAt = replaceRight . replaceAt @rest
+  splitAt   = either (Left . weakenRight) Right . splitAt @rest @sub @sub' <=< splitRight
 
 
 weakenLeft :: Union left a -> Union (left ':+: right) a
