@@ -2,6 +2,7 @@ module Control.Effect
 ( Effect
 , send
 , run
+, runM
 , Member
 ) where
 
