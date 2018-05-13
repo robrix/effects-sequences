@@ -58,6 +58,9 @@ instance Monad (Arrow effects a) where
     a <- m e
     runArrow (f a) e)
 
+instance Show (Arrow effects a b) where
+  showsPrec d (Arrow _) = showParen (d > 10) $ showString "Arrow _"
+
 
 instance Functor (Effect effects) where
   fmap f (Pure a)     = Pure (f a)
