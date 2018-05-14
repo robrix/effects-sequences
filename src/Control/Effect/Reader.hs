@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, GADTs, ScopedTypeVariables, StandaloneDeriving #-}
+{-# LANGUAGE FlexibleContexts, GADTs, ScopedTypeVariables, StandaloneDeriving, TypeOperators #-}
 module Control.Effect.Reader where
 
 import Control.Effect
@@ -19,8 +19,8 @@ local f m = do
   interpose pure bind m
 
 
-runReader :: context -> Effect (S (Reader context)) a -> a
-runReader context = handleEffect id (\ Ask yield -> yield context)
+runReader :: (effects \\ S (Reader context)) rest => context -> Effect effects a -> Effect rest a
+runReader context = interpretEffect pure (\ Ask yield -> yield context)
 
 
 deriving instance Show (Reader context result)
