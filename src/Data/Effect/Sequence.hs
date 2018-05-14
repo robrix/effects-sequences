@@ -30,3 +30,13 @@ type family PathTo' (side :: Side) (sub :: Seq k) (super :: Seq k) :: Maybe [Sid
   PathTo' side sub sub              = 'Just '[side]
   PathTo' side sub (left :+: right) = 'Just (side ': FromJust (PathTo' 'L sub left <> PathTo' 'R sub right))
   PathTo' _    _   _                = 'Nothing
+
+
+type family Diff (seqA :: Seq k) (seqB :: Seq k) :: Seq k where
+  Diff same             same              = Empty
+  Diff a                Empty             = a
+  Diff Empty            a                 = a
+  Diff (left :+: right) right             = left
+  Diff (left :+: right) left              = right
+  Diff (left :+: right) (left' :+: right) = Diff left left'
+  Diff (left :+: right) (left :+: right') = Diff right right'
