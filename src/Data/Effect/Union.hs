@@ -12,7 +12,6 @@ module Data.Effect.Union
 , strengthenSingleton
 , decompose
 , Subseq(..)
-, ProperSubseq(..)
 ) where
 
 import Control.Monad ((<=<))
@@ -55,6 +54,9 @@ class Subseq sub super where
   replace    :: (Union sub a -> Union sub' a) -> Union super a -> Union ((sub >-> sub') super) a
   split      :: proxy sub' -> Union super a -> Either (Union ((sub >-> sub') super) a) (Union sub a)
 
+  type family super \\ sub :: Seq (Type -> Type)
+  delete :: Union super a -> Either (Union (super \\ sub) a) (Union sub a)
+
 instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super where
   weaken     = weakenAt @path
   strengthen = strengthenAt @path
@@ -62,6 +64,9 @@ instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super 
   type (sub >-> sub') super = ReplacedAt (PathTo sub super) sub sub' super
   replace = replaceAt @path
   split   = splitAt @path
+
+  type super \\ sub = DeletedAt (PathTo sub super) sub super
+  delete = deleteAt @path
 
 
 class SubseqAt (path :: [Side]) sub super | path super -> sub where
@@ -72,6 +77,9 @@ class SubseqAt (path :: [Side]) sub super | path super -> sub where
   replaceAt  :: (Union sub a -> Union sub' a) -> Union super a -> Union (ReplacedAt path sub sub' super) a
   splitAt    :: proxy sub' -> Union super a -> Either (Union (ReplacedAt path sub sub' super) a) (Union sub a)
 
+  type family DeletedAt path sub super :: Seq (Type -> Type)
+  deleteAt :: Union super a -> Either (Union (DeletedAt path sub super) a) (Union sub a)
+
 instance SubseqAt '[] sub sub where
   weakenAt     = id
   strengthenAt = Just
@@ -80,49 +88,50 @@ instance SubseqAt '[] sub sub where
   replaceAt = ($)
   splitAt   = const Right
 
-instance SubseqAt rest sub left => SubseqAt ('L ': rest) sub (left ':+: right) where
-  weakenAt     = weakenLeft . weakenAt @rest
-  strengthenAt = either (strengthenAt @rest) (const Nothing) . decompose
+  type DeletedAt '[] sub sub = Empty
+  deleteAt = Right
 
-  type ReplacedAt ('L ': rest) sub sub' (left ':+: right) = ReplacedAt rest sub sub' left ':+: right
-  replaceAt = replaceLeft . replaceAt @rest
-  splitAt p = first weakenLeft . splitAt @rest p <=< splitLeft
+instance SubseqAt ('L ': '[]) left (left :+: right) where
+  weakenAt = weakenLeft
+  strengthenAt = either Just (const Nothing) . decompose
 
-instance SubseqAt rest sub right => SubseqAt ('R ': rest) sub (left ':+: right) where
-  weakenAt     = weakenRight . weakenAt @rest
-  strengthenAt = either (const Nothing) (strengthenAt @rest) . decompose
+  type ReplacedAt ('L ': '[]) left left' (left ':+: right) = left' ':+: right
+  replaceAt = replaceLeft
+  splitAt _ = splitLeft
 
-  type ReplacedAt ('R ': rest) sub sub' (left ':+: right) = left ':+: ReplacedAt rest sub sub' right
-  replaceAt = replaceRight . replaceAt @rest
-  splitAt p = first weakenRight . splitAt @rest p <=< splitRight
-
-
-class Subseq sub super => ProperSubseq sub super where
-  type family super \\ sub :: Seq (Type -> Type)
-  delete :: Union super a -> Either (Union (super \\ sub) a) (Union sub a)
-
-instance (PathTo sub super ~ path, ProperSubseqAt path sub super) => ProperSubseq sub super where
-  type super \\ sub = DeletedAt (PathTo sub super) sub super
-  delete = deleteAt @path
-
-
-class SubseqAt path sub super => ProperSubseqAt path sub super where
-  type family DeletedAt path sub super :: Seq (Type -> Type)
-  deleteAt :: Union super a -> Either (Union (DeletedAt path sub super) a) (Union sub a)
-
-instance ProperSubseqAt ('L ': '[]) left (left :+: right) where
   type DeletedAt ('L ': '[]) left (left :+: right) = right
   deleteAt = either Right Left . decompose
 
-instance ProperSubseqAt ('R ': '[]) right (left :+: right) where
-  type DeletedAt ('R ': '[]) right (left :+: right) = left
-  deleteAt = decompose
+instance SubseqAt (next ': rest) sub left => SubseqAt ('L ': next ': rest) sub (left ':+: right) where
+  weakenAt     = weakenLeft . weakenAt @(next ': rest)
+  strengthenAt = either (strengthenAt @(next ': rest)) (const Nothing) . decompose
 
-instance ProperSubseqAt (next ': rest) sub left => ProperSubseqAt ('L ': next ': rest) sub (left :+: right) where
+  type ReplacedAt ('L ': next ': rest) sub sub' (left ':+: right) = ReplacedAt (next ': rest) sub sub' left ':+: right
+  replaceAt = replaceLeft . replaceAt @(next ': rest)
+  splitAt p = first weakenLeft . splitAt @(next ': rest) p <=< splitLeft
+
   type DeletedAt ('L ': next ': rest) sub (left :+: right) = DeletedAt (next ': rest) sub left :+: right
   deleteAt = either (first weakenLeft . deleteAt @(next ': rest)) (Left . weakenRight) . decompose
 
-instance ProperSubseqAt (next ': rest) sub right => ProperSubseqAt ('R ': next ': rest) sub (left :+: right) where
+instance SubseqAt ('R ': '[]) right (left :+: right) where
+  weakenAt = weakenRight
+  strengthenAt = either (const Nothing) Just . decompose
+
+  type ReplacedAt ('R ': '[]) right right' (left ':+: right) = left ':+: right'
+  replaceAt = replaceRight
+  splitAt _ = splitRight
+
+  type DeletedAt ('R ': '[]) right (left :+: right) = left
+  deleteAt = decompose
+
+instance SubseqAt (next ': rest) sub right => SubseqAt ('R ': next ': rest) sub (left ':+: right) where
+  weakenAt     = weakenRight . weakenAt @(next ': rest)
+  strengthenAt = either (const Nothing) (strengthenAt @(next ': rest)) . decompose
+
+  type ReplacedAt ('R ': next ': rest) sub sub' (left ':+: right) = left ':+: ReplacedAt (next ': rest) sub sub' right
+  replaceAt = replaceRight . replaceAt @(next ': rest)
+  splitAt p = first weakenRight . splitAt @(next ': rest) p <=< splitRight
+
   type DeletedAt ('R ': next ': rest) sub (left :+: right) = left :+: DeletedAt (next ': rest) sub right
   deleteAt = either (Left . weakenLeft) (first weakenRight . deleteAt @(next ': rest)) . decompose
 
