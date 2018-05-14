@@ -11,7 +11,12 @@ module Data.Effect.Union
 , weakenSingleton
 , strengthenSingleton
 , decompose
-, Subseq(..)
+, Subseq
+, weaken
+, strengthen
+, type (>->)
+, replace
+, split
 , type (\\)
 , delete
 ) where
@@ -26,7 +31,7 @@ import Unsafe.Coerce
 
 data Union (members :: Seq (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
 
-type Member member = Subseq (S member)
+type Member member members = Subseq (S member) members
 
 inject :: Member member members => member a -> Union members a
 inject = weaken . weakenSingleton
@@ -48,21 +53,22 @@ decompose (Union n member)
   | otherwise = Right (Union (n `div` 2) member)
 
 
-class Subseq sub super where
-  weaken     :: Union sub   a ->        Union super a
-  strengthen :: Union super a -> Maybe (Union sub   a)
+type Subseq sub super = SubseqAt (PathTo sub super) sub super
 
-  type family (sub >-> (sub' :: Seq (Type -> Type))) super :: Seq (Type -> Type)
-  replace    :: (Union sub a -> Union sub' a) -> Union super a -> Union ((sub >-> sub') super) a
-  split      :: proxy sub' -> Union super a -> Either (Union ((sub >-> sub') super) a) (Union sub a)
+weaken :: forall sub super a . Subseq sub super => Union sub a -> Union super a
+weaken = weakenAt @(PathTo sub super)
 
-instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super where
-  weaken     = weakenAt @path
-  strengthen = strengthenAt @path
+strengthen :: forall sub super a . Subseq sub super => Union super a -> Maybe (Union sub a)
+strengthen = strengthenAt @(PathTo sub super)
 
-  type (sub >-> sub') super = ReplacedAt (PathTo sub super) sub sub' super
-  replace = replaceAt @path
-  split   = splitAt @path
+
+type (sub >-> sub') super = ReplacedAt (PathTo sub super) sub sub' super
+
+replace :: forall sub super a sub' . Subseq sub super => (Union sub a -> Union sub' a) -> Union super a -> Union ((sub >-> sub') super) a
+replace = replaceAt @(PathTo sub super)
+
+split :: forall sub super proxy sub' a . Subseq sub super => proxy sub' -> Union super a -> Either (Union ((sub >-> sub') super) a) (Union sub a)
+split = splitAt @(PathTo sub super)
 
 
 type (super \\ sub) difference = DifferenceAt (PathTo sub super) sub super difference
