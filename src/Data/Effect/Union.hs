@@ -11,7 +11,6 @@ module Data.Effect.Union
 , strengthenSingleton
 , decompose
 , Subseq(..)
-, Replace(..)
 ) where
 
 import Control.Monad ((<=<))
@@ -51,6 +50,7 @@ class Subseq sub super where
 
   type family Replaced sub (sub' :: Seq (Type -> Type)) super :: Seq (Type -> Type)
   replace    :: (Union sub a -> Union sub' a) -> Union super a -> Union (Replaced sub sub' super) a
+  split      :: proxy sub' -> Union super a -> Either (Union (Replaced sub sub' super) a) (Union sub a)
 
 instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super where
   weaken = weakenAt @path
@@ -58,6 +58,7 @@ instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super 
 
   type Replaced sub sub' super = ReplacedAt (PathTo sub super) sub sub' super
   replace = replaceAt @path
+  split   = splitAt @path
 
 
 class SubseqAt (path :: [Side]) sub super where
@@ -66,6 +67,7 @@ class SubseqAt (path :: [Side]) sub super where
 
   type family ReplacedAt path sub (sub' :: Seq (Type -> Type)) super :: Seq (Type -> Type)
   replaceAt  :: (Union sub a -> Union sub' a) -> Union super a -> Union (ReplacedAt path sub sub' super) a
+  splitAt    :: proxy sub' -> Union super a -> Either (Union (ReplacedAt path sub sub' super) a) (Union sub a)
 
 instance SubseqAt '[] sub sub where
   weakenAt     = id
@@ -73,6 +75,7 @@ instance SubseqAt '[] sub sub where
 
   type ReplacedAt '[] sub sub' sub = sub'
   replaceAt = ($)
+  splitAt   = const Right
 
 instance SubseqAt rest sub left => SubseqAt ('L ': rest) sub (left ':+: right) where
   weakenAt     = weakenLeft . weakenAt @rest
@@ -80,6 +83,7 @@ instance SubseqAt rest sub left => SubseqAt ('L ': rest) sub (left ':+: right) w
 
   type ReplacedAt ('L ': rest) sub sub' (left ':+: right) = ReplacedAt rest sub sub' left ':+: right
   replaceAt = replaceLeft . replaceAt @rest
+  splitAt p = either (Left . weakenLeft) Right . splitAt @rest p <=< splitLeft
 
 instance SubseqAt rest sub right => SubseqAt ('R ': rest) sub (left ':+: right) where
   weakenAt     = weakenRight . weakenAt @rest
@@ -87,26 +91,7 @@ instance SubseqAt rest sub right => SubseqAt ('R ': rest) sub (left ':+: right) 
 
   type ReplacedAt ('R ': rest) sub sub' (left ':+: right) = left ':+: ReplacedAt rest sub sub' right
   replaceAt = replaceRight . replaceAt @rest
-
-
-class (Subseq sub super, Subseq sub' super') => Replace sub sub' super super' | sub sub' super -> super', sub super super' -> sub', sub sub' super' -> super, sub' super super' -> sub where
-  split   :: Union super a -> Either (Union super' a) (Union sub a)
-
-instance (PathTo sub super ~ path, PathTo sub' super' ~ path, ReplaceAt path sub sub' super super') => Replace sub sub' super super' where
-  split   = splitAt @path
-
-
-class (SubseqAt path sub super, SubseqAt path sub' super') => ReplaceAt (path :: [Side]) sub sub' super super' | sub sub' super -> super', sub super super' -> sub', sub sub' super' -> super, sub' super super' -> sub where
-  splitAt   :: Union super a -> Either (Union super' a) (Union sub a)
-
-instance ReplaceAt '[] sub sub' sub sub' where
-  splitAt   = Right
-
-instance ReplaceAt rest sub sub' left left' => ReplaceAt ('L ': rest) sub sub' (left ':+: right) (left' ':+: right) where
-  splitAt   = either (Left . weakenLeft) Right . splitAt @rest @sub @sub' <=< splitLeft
-
-instance ReplaceAt rest sub sub' right right' => ReplaceAt ('R ': rest) sub sub' (left ':+: right) (left ':+: right') where
-  splitAt   = either (Left . weakenRight) Right . splitAt @rest @sub @sub' <=< splitRight
+  splitAt p = either (Left . weakenRight) Right . splitAt @rest p <=< splitRight
 
 
 weakenLeft :: Union left a -> Union (left ':+: right) a
