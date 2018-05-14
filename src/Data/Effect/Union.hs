@@ -2,6 +2,7 @@
 module Data.Effect.Union
 ( Seq
 , S
+, Empty
 , type (:+:)
 , Union
 , Member

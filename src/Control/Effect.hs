@@ -4,6 +4,7 @@ module Control.Effect
 -- * Constructing effects
 , send
 -- * Handlers
+, run
 , runM
 , handleEffect
 , handleStatefulEffect
@@ -20,6 +21,7 @@ module Control.Effect
 , Member
 , Seq
 , S
+, Empty
 , type (:+:)
 , decompose
 , inject

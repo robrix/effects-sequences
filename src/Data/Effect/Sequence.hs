@@ -1,9 +1,10 @@
 {-# LANGUAGE DataKinds, PolyKinds, TypeFamilies, TypeOperators, UndecidableInstances #-}
 module Data.Effect.Sequence where
 
--- | Non-empty sequences, represented as binary trees.
-data Seq a = S a | Seq a :+: Seq a
+-- | Sequences, represented as binary trees.
+data Seq a = Empty | S a | Seq a :+: Seq a
 
+type Empty = 'Empty
 type S = 'S
 type l :+: r = l ':+: r
 

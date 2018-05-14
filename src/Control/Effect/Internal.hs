@@ -4,6 +4,7 @@ module Control.Effect.Internal
 -- * Constructing effects
 , send
 -- * Handlers
+, run
 , runM
 , handleEffects
 , handleStatefulEffects
@@ -46,6 +47,10 @@ data Effect effects result
 send :: Member effect effects => effect return -> Effect effects return
 send effect = Effect (inject effect) id
 
+
+run :: Effect Empty a -> a
+run (Pure a) = a
+run _        = error "impossible: Effect with no effects"
 
 runM :: Monad m => Effect (S m) a -> m a
 runM = handleEffect pure (>>=)
