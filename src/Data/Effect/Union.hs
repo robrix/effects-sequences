@@ -12,7 +12,8 @@ module Data.Effect.Union
 , strengthenSingleton
 , decompose
 , Subseq(..)
-, type (\\) (..)
+, type (\\)
+, delete
 ) where
 
 import Control.Monad ((<=<))
@@ -64,11 +65,10 @@ instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super 
   split   = splitAt @path
 
 
-class Subseq sub super => (super \\ sub) (difference :: Seq (Type -> Type)) | super sub -> difference, super difference -> sub where
-  delete :: Union super a -> Either (Union difference a) (Union sub a)
+type (super \\ sub) difference = DifferenceAt (PathTo sub super) sub super difference
 
-instance (PathTo sub super ~ path, DifferenceAt path sub super difference) => (super \\ sub) difference where
-  delete = deleteAt @path
+delete :: forall super sub difference a . (super \\ sub) difference => Union super a -> Either (Union difference a) (Union sub a)
+delete = deleteAt @(PathTo sub super)
 
 
 class SubseqAt (path :: [Side]) sub super | path super -> sub where
