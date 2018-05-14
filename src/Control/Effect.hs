@@ -23,6 +23,8 @@ module Control.Effect
 , S
 , Empty
 , type (:+:)
+, type (\\)
+, type (>->)
 , decompose
 , inject
 , project
