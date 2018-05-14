@@ -7,6 +7,7 @@ module Control.Effect.Internal
 , runM
 , handleEffects
 , handleStatefulEffects
+, interpretEffects
 , reinterpretEffects
 , handleEffect
 , handleStatefulEffect
@@ -59,6 +60,12 @@ handleStatefulEffects state pure' bind = loop state
   where loop state (Pure a)     = pure' state a
         loop state (Effect u q) = bind state u (\ state' -> loop state' . dequeue q)
 
+interpretEffects :: (ProperSubseq sub super, super' ~ Deleted sub super) => (a -> Effect super' a') -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+interpretEffects pure' bind = loop
+  where loop (Pure a) = pure' a
+        loop (Effect u q) = case delete u of
+          Left  u' -> Effect u' (unit (Arrow (loop . dequeue q)))
+          Right u' -> bind u' (loop . dequeue q)
 
 reinterpretEffects :: (Subseq sub super, super' ~ Replaced sub sub' super) => proxy sub' -> (a -> Effect super' a') -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
 reinterpretEffects proxy pure' bind = loop
