@@ -64,7 +64,7 @@ instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super 
   split   = splitAt @path
 
 
-class Subseq sub super => (super \\ sub) (difference :: Seq (Type -> Type)) | super sub -> difference where
+class Subseq sub super => (super \\ sub) (difference :: Seq (Type -> Type)) | super sub -> difference, super difference -> sub where
   delete :: Union super a -> Either (Union difference a) (Union sub a)
 
 instance (PathTo sub super ~ path, DifferenceAt path sub super difference) => (super \\ sub) difference where
@@ -120,10 +120,10 @@ instance SubseqAt (next ': rest) sub right => SubseqAt ('R ': next ': rest) sub 
   splitAt p = first weakenRight . splitAt @(next ': rest) p <=< splitRight
 
 
-class SubseqAt path sub super => DifferenceAt path sub super (difference :: Seq (Type -> Type)) | path super -> sub difference, path super difference -> sub where
+class SubseqAt path sub super => DifferenceAt path sub super (difference :: Seq (Type -> Type)) | path super -> sub difference, super difference -> sub where
   deleteAt :: Union super a -> Either (Union difference a) (Union sub a)
 
-instance DifferenceAt '[] sub sub Empty where
+instance Diff sub Empty ~ sub' => DifferenceAt '[] sub' sub Empty where
   deleteAt = Right
 
 instance DifferenceAt ('L ': '[]) left (left :+: right) right where
