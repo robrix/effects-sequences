@@ -14,6 +14,7 @@ module Data.Effect.Union
 ) where
 
 import Control.Monad ((<=<))
+import Data.Bifunctor
 import Data.Effect.Sequence
 import Data.Functor.Classes (Show1(..))
 import Data.Kind (Type)
@@ -83,7 +84,7 @@ instance SubseqAt rest sub left => SubseqAt ('L ': rest) sub (left ':+: right) w
 
   type ReplacedAt ('L ': rest) sub sub' (left ':+: right) = ReplacedAt rest sub sub' left ':+: right
   replaceAt = replaceLeft . replaceAt @rest
-  splitAt p = either (Left . weakenLeft) Right . splitAt @rest p <=< splitLeft
+  splitAt p = first weakenLeft . splitAt @rest p <=< splitLeft
 
 instance SubseqAt rest sub right => SubseqAt ('R ': rest) sub (left ':+: right) where
   weakenAt     = weakenRight . weakenAt @rest
@@ -91,7 +92,7 @@ instance SubseqAt rest sub right => SubseqAt ('R ': rest) sub (left ':+: right) 
 
   type ReplacedAt ('R ': rest) sub sub' (left ':+: right) = left ':+: ReplacedAt rest sub sub' right
   replaceAt = replaceRight . replaceAt @rest
-  splitAt p = either (Left . weakenRight) Right . splitAt @rest p <=< splitRight
+  splitAt p = first weakenRight . splitAt @rest p <=< splitRight
 
 
 weakenLeft :: Union left a -> Union (left ':+: right) a
