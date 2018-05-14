@@ -12,6 +12,7 @@ module Data.Effect.Union
 , strengthenSingleton
 , decompose
 , Subseq(..)
+, type (\\) (..)
 ) where
 
 import Control.Monad ((<=<))
@@ -54,9 +55,6 @@ class Subseq sub super where
   replace    :: (Union sub a -> Union sub' a) -> Union super a -> Union ((sub >-> sub') super) a
   split      :: proxy sub' -> Union super a -> Either (Union ((sub >-> sub') super) a) (Union sub a)
 
-  type family super \\ sub :: Seq (Type -> Type)
-  delete :: Union super a -> Either (Union (super \\ sub) a) (Union sub a)
-
 instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super where
   weaken     = weakenAt @path
   strengthen = strengthenAt @path
@@ -65,7 +63,11 @@ instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super 
   replace = replaceAt @path
   split   = splitAt @path
 
-  type super \\ sub = DeletedAt (PathTo sub super) sub super
+
+class Subseq sub super => (super \\ sub) (difference :: Seq (Type -> Type)) | super sub -> difference where
+  delete :: Union super a -> Either (Union difference a) (Union sub a)
+
+instance (PathTo sub super ~ path, DifferenceAt path sub super difference) => (super \\ sub) difference where
   delete = deleteAt @path
 
 
@@ -77,9 +79,6 @@ class SubseqAt (path :: [Side]) sub super | path super -> sub where
   replaceAt  :: (Union sub a -> Union sub' a) -> Union super a -> Union (ReplacedAt path sub sub' super) a
   splitAt    :: proxy sub' -> Union super a -> Either (Union (ReplacedAt path sub sub' super) a) (Union sub a)
 
-  type family DeletedAt path sub super :: Seq (Type -> Type)
-  deleteAt :: Union super a -> Either (Union (DeletedAt path sub super) a) (Union sub a)
-
 instance SubseqAt '[] sub sub where
   weakenAt     = id
   strengthenAt = Just
@@ -87,9 +86,6 @@ instance SubseqAt '[] sub sub where
   type ReplacedAt '[] sub sub' sub = sub'
   replaceAt = ($)
   splitAt   = const Right
-
-  type DeletedAt '[] sub sub = Empty
-  deleteAt = Right
 
 instance SubseqAt ('L ': '[]) left (left :+: right) where
   weakenAt = weakenLeft
@@ -99,9 +95,6 @@ instance SubseqAt ('L ': '[]) left (left :+: right) where
   replaceAt = replaceLeft
   splitAt _ = splitLeft
 
-  type DeletedAt ('L ': '[]) left (left :+: right) = right
-  deleteAt = either Right Left . decompose
-
 instance SubseqAt (next ': rest) sub left => SubseqAt ('L ': next ': rest) sub (left ':+: right) where
   weakenAt     = weakenLeft . weakenAt @(next ': rest)
   strengthenAt = either (strengthenAt @(next ': rest)) (const Nothing) . decompose
@@ -109,9 +102,6 @@ instance SubseqAt (next ': rest) sub left => SubseqAt ('L ': next ': rest) sub (
   type ReplacedAt ('L ': next ': rest) sub sub' (left ':+: right) = ReplacedAt (next ': rest) sub sub' left ':+: right
   replaceAt = replaceLeft . replaceAt @(next ': rest)
   splitAt p = first weakenLeft . splitAt @(next ': rest) p <=< splitLeft
-
-  type DeletedAt ('L ': next ': rest) sub (left :+: right) = DeletedAt (next ': rest) sub left :+: right
-  deleteAt = either (first weakenLeft . deleteAt @(next ': rest)) (Left . weakenRight) . decompose
 
 instance SubseqAt ('R ': '[]) right (left :+: right) where
   weakenAt = weakenRight
@@ -121,9 +111,6 @@ instance SubseqAt ('R ': '[]) right (left :+: right) where
   replaceAt = replaceRight
   splitAt _ = splitRight
 
-  type DeletedAt ('R ': '[]) right (left :+: right) = left
-  deleteAt = decompose
-
 instance SubseqAt (next ': rest) sub right => SubseqAt ('R ': next ': rest) sub (left ':+: right) where
   weakenAt     = weakenRight . weakenAt @(next ': rest)
   strengthenAt = either (const Nothing) (strengthenAt @(next ': rest)) . decompose
@@ -132,7 +119,23 @@ instance SubseqAt (next ': rest) sub right => SubseqAt ('R ': next ': rest) sub 
   replaceAt = replaceRight . replaceAt @(next ': rest)
   splitAt p = first weakenRight . splitAt @(next ': rest) p <=< splitRight
 
-  type DeletedAt ('R ': next ': rest) sub (left :+: right) = left :+: DeletedAt (next ': rest) sub right
+
+class SubseqAt path sub super => DifferenceAt path sub super (difference :: Seq (Type -> Type)) | path super -> sub difference where
+  deleteAt :: Union super a -> Either (Union difference a) (Union sub a)
+
+instance DifferenceAt '[] sub sub Empty where
+  deleteAt = Right
+
+instance DifferenceAt ('L ': '[]) left (left :+: right) right where
+  deleteAt = either Right Left . decompose
+
+instance DifferenceAt (next ': rest) sub left left' => DifferenceAt ('L ': next ': rest) sub (left :+: right) (left' :+: right) where
+  deleteAt = either (first weakenLeft . deleteAt @(next ': rest)) (Left . weakenRight) . decompose
+
+instance DifferenceAt ('R ': '[]) right (left :+: right) left where
+  deleteAt = decompose
+
+instance DifferenceAt (next ': rest) sub right right' => DifferenceAt ('R ': next ': rest) sub (left :+: right) (left :+: right') where
   deleteAt = either (Left . weakenLeft) (first weakenRight . deleteAt @(next ': rest)) . decompose
 
 
