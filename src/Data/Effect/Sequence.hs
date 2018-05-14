@@ -1,7 +1,5 @@
-{-# LANGUAGE AllowAmbiguousTypes, DataKinds, FlexibleContexts, PolyKinds, ScopedTypeVariables, TypeFamilies, TypeOperators, UndecidableInstances #-}
+{-# LANGUAGE DataKinds, PolyKinds, TypeFamilies, TypeOperators, UndecidableInstances #-}
 module Data.Effect.Sequence where
-
-import GHC.TypeLits
 
 -- | Non-empty sequences, represented as binary trees.
 data Seq a = S a | Seq a :+: Seq a
@@ -9,14 +7,7 @@ data Seq a = S a | Seq a :+: Seq a
 type S = 'S
 type l :+: r = l ':+: r
 
-type family Size (ts :: Seq k) where
-  Size ('S _)            = 1
-  Size (left ':+: right) = Size left + Size right
-
 infixr 5 :+:
-
-size :: forall tree . KnownNat (Size tree) => Int
-size = fromInteger (natVal (undefined :: proxy (Size tree)))
 
 
 data Side = L | R
@@ -38,9 +29,3 @@ type family PathTo' (side :: Side) (sub :: Seq k) (super :: Seq k) :: Maybe [Sid
   PathTo' side sub sub              = 'Just '[side]
   PathTo' side sub (left :+: right) = 'Just (side ': FromJust (PathTo' 'L sub left <> PathTo' 'R sub right))
   PathTo' _    _   _                = 'Nothing
-
-
-type family Path (path :: [Side]) :: Nat where
-  Path '[] = 0
-  Path ('L ': p) = 0 + (2 * Path p)
-  Path ('R ': p) = 1 + (2 * Path p)
