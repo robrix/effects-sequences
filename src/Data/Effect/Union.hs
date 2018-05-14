@@ -61,7 +61,7 @@ instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super 
   split   = splitAt @path
 
 
-class SubseqAt (path :: [Side]) sub super where
+class SubseqAt (path :: [Side]) sub super | path super -> sub where
   weakenAt     :: Union sub   a ->        Union super a
   strengthenAt :: Union super a -> Maybe (Union sub   a)
 
