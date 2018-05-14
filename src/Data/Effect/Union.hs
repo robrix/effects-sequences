@@ -53,7 +53,7 @@ class Subseq sub super where
   split      :: proxy sub' -> Union super a -> Either (Union (Replaced sub sub' super) a) (Union sub a)
 
 instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super where
-  weaken = weakenAt @path
+  weaken     = weakenAt @path
   strengthen = strengthenAt @path
 
   type Replaced sub sub' super = ReplacedAt (PathTo sub super) sub sub' super
