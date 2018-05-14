@@ -120,7 +120,7 @@ instance SubseqAt (next ': rest) sub right => SubseqAt ('R ': next ': rest) sub 
   splitAt p = first weakenRight . splitAt @(next ': rest) p <=< splitRight
 
 
-class SubseqAt path sub super => DifferenceAt path sub super (difference :: Seq (Type -> Type)) | path super -> sub difference where
+class SubseqAt path sub super => DifferenceAt path sub super (difference :: Seq (Type -> Type)) | path super -> sub difference, path super difference -> sub where
   deleteAt :: Union super a -> Either (Union difference a) (Union sub a)
 
 instance DifferenceAt '[] sub sub Empty where
