@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts, TypeOperators #-}
 module Control.Effect.Fail
 ( Fail(..)
 , runFail
@@ -6,5 +7,5 @@ module Control.Effect.Fail
 import Control.Effect
 import Control.Effect.Internal
 
-runFail :: Effect (S Fail) a -> Either String a
-runFail = handleEffect Right (\ (Fail s) _ -> Left s)
+runFail :: (effects \\ S Fail) rest => Effect effects a -> Effect rest (Either String a)
+runFail = interpretEffect (pure . Right) (\ (Fail s) _ -> pure (Left s))
