@@ -68,7 +68,7 @@ interpretEffects pure' bind = loop
           Left  u' -> Effect u' (unit (Arrow (loop . dequeue q)))
           Right u' -> bind u' (loop . dequeue q)
 
-reinterpretEffects :: (Subseq sub super, super' ~ Replaced sub sub' super) => proxy sub' -> (a -> Effect super' a') -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+reinterpretEffects :: Subseq sub super => proxy sub' -> (a -> Effect ((sub >-> sub') super) a') -> (forall result . Union sub result -> (result -> Effect ((sub >-> sub') super) a') -> Effect ((sub >-> sub') super) a') -> Effect super a -> Effect ((sub >-> sub') super) a'
 reinterpretEffects proxy pure' bind = loop
   where loop (Pure a)     = pure' a
         loop (Effect u q) = case split proxy u of
@@ -85,7 +85,7 @@ handleStatefulEffect state pure' bind = handleStatefulEffects state pure' (\ sta
 interpretEffect :: ProperSubseq (S effect) super => (a -> Effect (super \\ S effect) a') -> (forall result . effect result -> (result -> Effect (super \\ S effect) a') -> Effect (super \\ S effect) a') -> Effect super a -> Effect (super \\ S effect) a'
 interpretEffect pure' bind = interpretEffects pure' (bind . strengthenSingleton)
 
-reinterpretEffect :: (Subseq (S effect) super, super' ~ Replaced (S effect) sub' super) => proxy sub' -> (a -> Effect super' a') -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+reinterpretEffect :: Subseq (S effect) super => proxy sub' -> (a -> Effect ((S effect >-> sub') super) a') -> (forall result . effect result -> (result -> Effect ((S effect >-> sub') super) a') -> Effect ((S effect >-> sub') super) a') -> Effect super a -> Effect ((S effect >-> sub') super) a'
 reinterpretEffect proxy pure' bind = reinterpretEffects proxy pure' (bind . strengthenSingleton)
 
 

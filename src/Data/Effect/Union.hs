@@ -50,15 +50,15 @@ class Subseq sub super where
   weaken     :: Union sub   a ->        Union super a
   strengthen :: Union super a -> Maybe (Union sub   a)
 
-  type family Replaced sub (sub' :: Seq (Type -> Type)) super :: Seq (Type -> Type)
-  replace    :: (Union sub a -> Union sub' a) -> Union super a -> Union (Replaced sub sub' super) a
-  split      :: proxy sub' -> Union super a -> Either (Union (Replaced sub sub' super) a) (Union sub a)
+  type family (sub >-> (sub' :: Seq (Type -> Type))) super :: Seq (Type -> Type)
+  replace    :: (Union sub a -> Union sub' a) -> Union super a -> Union ((sub >-> sub') super) a
+  split      :: proxy sub' -> Union super a -> Either (Union ((sub >-> sub') super) a) (Union sub a)
 
 instance (PathTo sub super ~ path, SubseqAt path sub super) => Subseq sub super where
   weaken     = weakenAt @path
   strengthen = strengthenAt @path
 
-  type Replaced sub sub' super = ReplacedAt (PathTo sub super) sub sub' super
+  type (sub >-> sub') super = ReplacedAt (PathTo sub super) sub sub' super
   replace = replaceAt @path
   split   = splitAt @path
 
