@@ -11,6 +11,7 @@ module Data.Effect.Union
 , strengthenSingleton
 , decompose
 , Subseq(..)
+, ProperSubseq(..)
 ) where
 
 import Control.Monad ((<=<))
@@ -93,6 +94,36 @@ instance SubseqAt rest sub right => SubseqAt ('R ': rest) sub (left ':+: right) 
   type ReplacedAt ('R ': rest) sub sub' (left ':+: right) = left ':+: ReplacedAt rest sub sub' right
   replaceAt = replaceRight . replaceAt @rest
   splitAt p = first weakenRight . splitAt @rest p <=< splitRight
+
+
+class Subseq sub super => ProperSubseq sub super where
+  type family Deleted sub super :: Seq (Type -> Type)
+  delete :: Union super a -> Either (Union (Deleted sub super) a) (Union sub a)
+
+instance (PathTo sub super ~ path, ProperSubseqAt path sub super) => ProperSubseq sub super where
+  type Deleted sub super = DeletedAt (PathTo sub super) sub super
+  delete = deleteAt @path
+
+
+class SubseqAt path sub super => ProperSubseqAt path sub super where
+  type family DeletedAt path sub super :: Seq (Type -> Type)
+  deleteAt :: Union super a -> Either (Union (DeletedAt path sub super) a) (Union sub a)
+
+instance ProperSubseqAt ('L ': '[]) left (left :+: right) where
+  type DeletedAt ('L ': '[]) left (left :+: right) = right
+  deleteAt = either Right Left . decompose
+
+instance ProperSubseqAt ('R ': '[]) right (left :+: right) where
+  type DeletedAt ('R ': '[]) right (left :+: right) = left
+  deleteAt = decompose
+
+instance ProperSubseqAt (next ': rest) sub left => ProperSubseqAt ('L ': next ': rest) sub (left :+: right) where
+  type DeletedAt ('L ': next ': rest) sub (left :+: right) = DeletedAt (next ': rest) sub left :+: right
+  deleteAt = either (first weakenLeft . deleteAt @(next ': rest)) (Left . weakenRight) . decompose
+
+instance ProperSubseqAt (next ': rest) sub right => ProperSubseqAt ('R ': next ': rest) sub (left :+: right) where
+  type DeletedAt ('R ': next ': rest) sub (left :+: right) = left :+: DeletedAt (next ': rest) sub right
+  deleteAt = either (Left . weakenLeft) (first weakenRight . deleteAt @(next ': rest)) . decompose
 
 
 weakenLeft :: Union left a -> Union (left ':+: right) a
