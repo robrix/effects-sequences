@@ -97,11 +97,11 @@ instance SubseqAt rest sub right => SubseqAt ('R ': rest) sub (left ':+: right) 
 
 
 class Subseq sub super => ProperSubseq sub super where
-  type family Deleted sub super :: Seq (Type -> Type)
-  delete :: Union super a -> Either (Union (Deleted sub super) a) (Union sub a)
+  type family super \\ sub :: Seq (Type -> Type)
+  delete :: Union super a -> Either (Union (super \\ sub) a) (Union sub a)
 
 instance (PathTo sub super ~ path, ProperSubseqAt path sub super) => ProperSubseq sub super where
-  type Deleted sub super = DeletedAt (PathTo sub super) sub super
+  type super \\ sub = DeletedAt (PathTo sub super) sub super
   delete = deleteAt @path
 
 
