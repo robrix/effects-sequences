@@ -7,6 +7,7 @@ module Control.Effect
 , runM
 , handleEffect
 , handleStatefulEffect
+, interpretEffect
 , reinterpretEffect
 , handleEffects
 , handleStatefulEffects

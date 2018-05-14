@@ -11,6 +11,7 @@ module Control.Effect.Internal
 , reinterpretEffects
 , handleEffect
 , handleStatefulEffect
+, interpretEffect
 , reinterpretEffect
 , interpose
 , interposeState
@@ -81,6 +82,8 @@ handleEffect pure' bind = handleEffects pure' (bind . strengthenSingleton)
 handleStatefulEffect :: state -> (state -> a -> b) -> (forall result . state -> effect result -> (state -> result -> b) -> b) -> Effect (S effect) a -> b
 handleStatefulEffect state pure' bind = handleStatefulEffects state pure' (\ state' -> bind state' . strengthenSingleton)
 
+interpretEffect :: (ProperSubseq (S effect) super, super' ~ Deleted (S effect) super) => (a -> Effect super' a') -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+interpretEffect pure' bind = interpretEffects pure' (bind . strengthenSingleton)
 
 reinterpretEffect :: (Subseq (S effect) super, super' ~ Replaced (S effect) sub' super) => proxy sub' -> (a -> Effect super' a') -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
 reinterpretEffect proxy pure' bind = reinterpretEffects proxy pure' (bind . strengthenSingleton)
