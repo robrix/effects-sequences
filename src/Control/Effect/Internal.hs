@@ -82,10 +82,10 @@ interpretStatefulEffects initial pure' bind = loop initial
           Left  u' -> Effect u' (unit (Arrow (loop state . dequeue q)))
           Right u' -> bind state u' (\ state' -> loop state' . dequeue q)
 
-reinterpretEffects :: Subseq sub super => proxy sub' -> (a -> Effect ((sub >-> sub') super) a') -> (forall result . Union sub result -> (result -> Effect ((sub >-> sub') super) a') -> Effect ((sub >-> sub') super) a') -> Effect super a -> Effect ((sub >-> sub') super) a'
-reinterpretEffects proxy pure' bind = loop
+reinterpretEffects :: (sub >-> sub') super super' => (a -> Effect super' a') -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+reinterpretEffects pure' bind = loop
   where loop (Pure a)     = pure' a
-        loop (Effect u q) = case split proxy u of
+        loop (Effect u q) = case split u of
           Left  u' -> Effect u' (unit (Arrow (loop . dequeue q)))
           Right u' -> bind u' (loop . dequeue q)
 
@@ -102,8 +102,8 @@ interpretEffect pure' bind = interpretEffects pure' (bind . strengthenSingleton)
 interpretStatefulEffect :: (super \\ S effect) super' => state -> (state -> a -> Effect super' a') -> (forall result . state -> effect result -> (state -> result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
 interpretStatefulEffect state pure' bind = interpretStatefulEffects state pure' (\ state' -> bind state' . strengthenSingleton)
 
-reinterpretEffect :: Subseq (S effect) super => proxy sub' -> (a -> Effect ((S effect >-> sub') super) a') -> (forall result . effect result -> (result -> Effect ((S effect >-> sub') super) a') -> Effect ((S effect >-> sub') super) a') -> Effect super a -> Effect ((S effect >-> sub') super) a'
-reinterpretEffect proxy pure' bind = reinterpretEffects proxy pure' (bind . strengthenSingleton)
+reinterpretEffect :: (S effect >-> sub') super super' => (a -> Effect super' a') -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+reinterpretEffect pure' bind = reinterpretEffects pure' (bind . strengthenSingleton)
 
 
 interpose :: Member effect effects => (a -> Effect effects b) -> (forall result . effect result -> (result -> Effect effects b) -> Effect effects b) -> Effect effects a -> Effect effects b

@@ -62,12 +62,12 @@ strengthen :: forall sub super a . Subseq sub super => Union super a -> Maybe (U
 strengthen = strengthenAt @(PathTo sub super)
 
 
-type (sub >-> sub') super = ReplacedAt (PathTo sub super) sub sub' super
+type (sub >-> sub') super super' = ReplaceAt (PathTo sub super) sub sub' super super'
 
-replace :: forall sub super a sub' . Subseq sub super => (Union sub a -> Union sub' a) -> Union super a -> Union ((sub >-> sub') super) a
+replace :: forall sub sub' super super' a . (sub >-> sub') super super' => (Union sub a -> Union sub' a) -> Union super a -> Union super' a
 replace = replaceAt @(PathTo sub super)
 
-split :: forall sub super proxy sub' a . Subseq sub super => proxy sub' -> Union super a -> Either (Union ((sub >-> sub') super) a) (Union sub a)
+split :: forall sub sub' super super' a . (sub >-> sub') super super' => Union super a -> Either (Union super' a) (Union sub a)
 split = splitAt @(PathTo sub super)
 
 
@@ -81,33 +81,40 @@ class SubseqAt (path :: [Side]) sub super | path super -> sub where
   weakenAt     :: Union sub   a ->        Union super a
   strengthenAt :: Union super a -> Maybe (Union sub   a)
 
-  type family ReplacedAt path sub (sub' :: Seq (Type -> Type)) super :: Seq (Type -> Type)
-  replaceAt  :: (Union sub a -> Union sub' a) -> Union super a -> Union (ReplacedAt path sub sub' super) a
-  splitAt    :: proxy sub' -> Union super a -> Either (Union (ReplacedAt path sub sub' super) a) (Union sub a)
-
 instance SubseqAt '[] sub sub where
   weakenAt     = id
   strengthenAt = Just
-
-  type ReplacedAt '[] sub sub' sub = sub'
-  replaceAt = ($)
-  splitAt   = const Right
 
 instance SubseqAt rest sub left => SubseqAt ('L ': rest) sub (left ':+: right) where
   weakenAt     = weakenLeft . weakenAt @rest
   strengthenAt = either (strengthenAt @rest) (const Nothing) . decompose
 
-  type ReplacedAt ('L ': rest) sub sub' (left ':+: right) = ReplacedAt rest sub sub' left ':+: right
-  replaceAt = replaceLeft . replaceAt @rest
-  splitAt p = first weakenLeft . splitAt @rest p <=< splitLeft
-
 instance SubseqAt rest sub right => SubseqAt ('R ': rest) sub (left ':+: right) where
   weakenAt     = weakenRight . weakenAt @rest
   strengthenAt = either (const Nothing) (strengthenAt @rest) . decompose
 
-  type ReplacedAt ('R ': rest) sub sub' (left ':+: right) = left ':+: ReplacedAt rest sub sub' right
+
+class (SubseqAt path sub super, SubseqAt path sub' super') => ReplaceAt path sub sub' super super'
+  | path super -> sub
+  , path super' -> sub'
+  , super sub sub' -> super'
+  , super sub super' -> sub'
+  , super sub' super' -> sub
+  , sub sub' super' -> super where
+  replaceAt :: (Union sub a -> Union sub' a) -> Union super a -> Union super' a
+  splitAt :: Union super a -> Either (Union super' a) (Union sub a)
+
+instance ReplaceAt '[] sub sub' sub sub' where
+  replaceAt = ($)
+  splitAt   = Right
+
+instance ReplaceAt rest sub sub' left left' => ReplaceAt ('L ': rest) sub sub' (left :+: right) (left' :+: right) where
+  replaceAt = replaceLeft . replaceAt @rest
+  splitAt = first weakenLeft . splitAt @rest <=< splitLeft
+
+instance ReplaceAt rest sub sub' right right' => ReplaceAt ('R ': rest) sub sub' (left :+: right) (left :+: right') where
   replaceAt = replaceRight . replaceAt @rest
-  splitAt p = first weakenRight . splitAt @rest p <=< splitRight
+  splitAt = first weakenRight . splitAt @rest <=< splitRight
 
 
 class SubseqAt path sub super => DifferenceAt path sub super (difference :: Seq (Type -> Type)) | path super -> sub difference, super difference -> sub where
