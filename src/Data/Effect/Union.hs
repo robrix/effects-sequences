@@ -93,37 +93,21 @@ instance SubseqAt '[] sub sub where
   replaceAt = ($)
   splitAt   = const Right
 
-instance SubseqAt ('L ': '[]) left (left :+: right) where
-  weakenAt = weakenLeft
-  strengthenAt = either Just (const Nothing) . decompose
+instance SubseqAt rest sub left => SubseqAt ('L ': rest) sub (left ':+: right) where
+  weakenAt     = weakenLeft . weakenAt @rest
+  strengthenAt = either (strengthenAt @rest) (const Nothing) . decompose
 
-  type ReplacedAt ('L ': '[]) left left' (left ':+: right) = left' ':+: right
-  replaceAt = replaceLeft
-  splitAt _ = splitLeft
+  type ReplacedAt ('L ': rest) sub sub' (left ':+: right) = ReplacedAt rest sub sub' left ':+: right
+  replaceAt = replaceLeft . replaceAt @rest
+  splitAt p = first weakenLeft . splitAt @rest p <=< splitLeft
 
-instance SubseqAt (next ': rest) sub left => SubseqAt ('L ': next ': rest) sub (left ':+: right) where
-  weakenAt     = weakenLeft . weakenAt @(next ': rest)
-  strengthenAt = either (strengthenAt @(next ': rest)) (const Nothing) . decompose
+instance SubseqAt rest sub right => SubseqAt ('R ': rest) sub (left ':+: right) where
+  weakenAt     = weakenRight . weakenAt @rest
+  strengthenAt = either (const Nothing) (strengthenAt @rest) . decompose
 
-  type ReplacedAt ('L ': next ': rest) sub sub' (left ':+: right) = ReplacedAt (next ': rest) sub sub' left ':+: right
-  replaceAt = replaceLeft . replaceAt @(next ': rest)
-  splitAt p = first weakenLeft . splitAt @(next ': rest) p <=< splitLeft
-
-instance SubseqAt ('R ': '[]) right (left :+: right) where
-  weakenAt = weakenRight
-  strengthenAt = either (const Nothing) Just . decompose
-
-  type ReplacedAt ('R ': '[]) right right' (left ':+: right) = left ':+: right'
-  replaceAt = replaceRight
-  splitAt _ = splitRight
-
-instance SubseqAt (next ': rest) sub right => SubseqAt ('R ': next ': rest) sub (left ':+: right) where
-  weakenAt     = weakenRight . weakenAt @(next ': rest)
-  strengthenAt = either (const Nothing) (strengthenAt @(next ': rest)) . decompose
-
-  type ReplacedAt ('R ': next ': rest) sub sub' (left ':+: right) = left ':+: ReplacedAt (next ': rest) sub sub' right
-  replaceAt = replaceRight . replaceAt @(next ': rest)
-  splitAt p = first weakenRight . splitAt @(next ': rest) p <=< splitRight
+  type ReplacedAt ('R ': rest) sub sub' (left ':+: right) = left ':+: ReplacedAt rest sub sub' right
+  replaceAt = replaceRight . replaceAt @rest
+  splitAt p = first weakenRight . splitAt @rest p <=< splitRight
 
 
 class SubseqAt path sub super => DifferenceAt path sub super (difference :: Seq (Type -> Type)) | path super -> sub difference, super difference -> sub where
