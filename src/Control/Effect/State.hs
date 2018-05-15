@@ -27,10 +27,10 @@ modify' f = do
   put $! f state
 
 
-runState :: state -> Effect (S (State state)) a -> (a, state)
-runState state = handleStatefulEffect state (flip (,)) (\ state eff yield -> case eff of
-  Get -> yield state state
-  Put state' -> yield state' ())
+runState :: (effects \\ S (State state)) rest => state -> Effect effects a -> Effect rest (a, state)
+runState state = interpretStatefulEffect state (\ state' a -> pure (a, state')) (\ state' eff yield -> case eff of
+  Get -> yield state' state'
+  Put state'' -> yield state'' ())
 
 reinterpretState :: Effect (S (State state)) a -> Effect (S (Reader state) :+: S (Writer state)) a
 reinterpretState = handleEffect pure (\ eff yield -> case eff of
