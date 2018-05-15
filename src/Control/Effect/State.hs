@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, GADTs, StandaloneDeriving, TypeOperators, ViewPatterns #-}
+{-# LANGUAGE FlexibleContexts, GADTs, ScopedTypeVariables, StandaloneDeriving, TypeApplications, TypeOperators, ViewPatterns #-}
 module Control.Effect.State where
 
 import Control.Effect
@@ -32,8 +32,8 @@ runState state = interpretStatefulEffect state (\ state' a -> pure (a, state')) 
   Get -> yield state' state'
   Put state'' -> yield state'' ())
 
-reinterpretState :: Effect (S (State state)) a -> Effect (S (Reader state) :+: S (Writer state)) a
-reinterpretState = handleEffect pure (\ eff yield -> case eff of
+reinterpretState :: forall state effects effects' a proxy . ((S (State state) >-> (S (Reader state) :+: S (Writer state))) effects effects', Member (Reader state) effects', Member (Writer state) effects') => proxy state -> Effect effects a -> Effect effects' a
+reinterpretState _ = reinterpretEffect @(State state) pure (\ eff yield -> case eff of
   Get -> ask >>= yield
   Put s -> tell s >>= yield)
 
