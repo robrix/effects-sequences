@@ -37,10 +37,10 @@ reinterpretState = handleEffect pure (\ eff yield -> case eff of
   Get -> ask >>= yield
   Put s -> tell s >>= yield)
 
-runStateRW :: state -> Effect (S (Reader state) :+: S (Writer state)) a -> (a, state)
-runStateRW state = handleStatefulEffects state (flip (,)) (\ state effs yield -> case decompose effs of
-  Left  (strengthenSingleton -> Ask)         -> yield state state
-  Right (strengthenSingleton -> Tell state') -> yield state' ())
+runStateRW :: (effects \\ (S (Reader state) :+: S (Writer state))) rest => state -> Effect effects a -> Effect rest (a, state)
+runStateRW state = interpretStatefulEffects state (\ state' a -> pure (a, state')) (\ state' effs yield -> case decompose effs of
+  Left  (strengthenSingleton -> Ask)         -> yield state' state'
+  Right (strengthenSingleton -> Tell state'') -> yield state'' ())
 
 
 deriving instance Show state => Show (State state result)
