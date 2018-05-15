@@ -2,4 +2,4 @@ packages: effects-sequences.cabal
 optional-packages: vendor/*/*.cabal
 jobs: $ncpus
 package effects-sequences
-  ghc-options: -Wall -Wno-name-shadowing -Werror
+  ghc-options: -Weverything -Wno-missing-local-signatures -Wno-missing-import-lists -Wno-missing-export-lists -Wno-implicit-prelude -Wno-safe -Wno-unsafe -Wno-name-shadowing -Werror
