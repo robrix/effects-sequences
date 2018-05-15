@@ -9,10 +9,12 @@ module Control.Effect
 , handleEffect
 , handleStatefulEffect
 , interpretEffect
+, interpretStatefulEffect
 , reinterpretEffect
 , handleEffects
 , handleStatefulEffects
 , interpretEffects
+, interpretStatefulEffects
 , reinterpretEffects
 , interpose
 , interposeState
