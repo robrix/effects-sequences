@@ -55,7 +55,9 @@ run (Pure a) = a
 run _        = error "impossible: Effect with no effects"
 
 runM :: Monad m => Effect (S m) a -> m a
-runM = handleEffect pure (>>=)
+runM = loop
+  where loop (Pure a) = pure a
+        loop (Effect u q) = strengthenSingleton u >>= loop . dequeue q
 
 
 handleEffects :: (a -> b) -> (forall result . Union effects result -> (result -> b) -> b) -> Effect effects a -> b
