@@ -6,13 +6,9 @@ module Control.Effect.Internal
 -- * Handlers
 , run
 , runM
-, handleEffects
-, handleStatefulEffects
 , interpretEffects
 , interpretStatefulEffects
 , reinterpretEffects
-, handleEffect
-, handleStatefulEffect
 , interpretEffect
 , interpretStatefulEffect
 , reinterpretEffect
@@ -60,16 +56,6 @@ runM = loop
         loop (Effect u q) = strengthenSingleton u >>= loop . dequeue q
 
 
-handleEffects :: (a -> b) -> (forall result . Union effects result -> (result -> b) -> b) -> Effect effects a -> b
-handleEffects pure' bind = loop
-  where loop (Pure a)     = pure' a
-        loop (Effect u q) = bind u (loop . dequeue q)
-
-handleStatefulEffects :: state -> (state -> a -> b) -> (forall result . state -> Union effects result -> (state -> result -> b) -> b) -> Effect effects a -> b
-handleStatefulEffects state pure' bind = loop state
-  where loop state (Pure a)     = pure' state a
-        loop state (Effect u q) = bind state u (\ state' -> loop state' . dequeue q)
-
 interpretEffects :: (super \\ sub) super' => (a -> Effect super' a') -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
 interpretEffects pure' bind = loop
   where loop (Pure a) = pure' a
@@ -91,12 +77,6 @@ reinterpretEffects pure' bind = loop
           Left  u' -> Effect u' (unit (Arrow (loop . dequeue q)))
           Right u' -> bind u' (loop . dequeue q)
 
-
-handleEffect :: (a -> b) -> (forall result . effect result -> (result -> b) -> b) -> Effect (S effect) a -> b
-handleEffect pure' bind = handleEffects pure' (bind . strengthenSingleton)
-
-handleStatefulEffect :: state -> (state -> a -> b) -> (forall result . state -> effect result -> (state -> result -> b) -> b) -> Effect (S effect) a -> b
-handleStatefulEffect state pure' bind = handleStatefulEffects state pure' (\ state' -> bind state' . strengthenSingleton)
 
 interpretEffect :: (super \\ S effect) super' => (a -> Effect super' a') -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
 interpretEffect pure' bind = interpretEffects pure' (bind . strengthenSingleton)

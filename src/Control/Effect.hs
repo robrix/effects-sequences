@@ -6,13 +6,9 @@ module Control.Effect
 -- * Handlers
 , run
 , runM
-, handleEffect
-, handleStatefulEffect
 , interpretEffect
 , interpretStatefulEffect
 , reinterpretEffect
-, handleEffects
-, handleStatefulEffects
 , interpretEffects
 , interpretStatefulEffects
 , reinterpretEffects
