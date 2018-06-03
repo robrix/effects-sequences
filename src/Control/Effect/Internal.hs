@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, MultiParamTypeClasses, RankNTypes, StandaloneDeriving, TypeOperators, TypeSynonymInstances, UndecidableInstances #-}
+{-# LANGUAGE DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, MultiParamTypeClasses, PolyKinds, RankNTypes, StandaloneDeriving, TypeOperators, TypeSynonymInstances, UndecidableInstances #-}
 module Control.Effect.Internal
 ( Effect(..)
 -- * Constructing effects
@@ -23,6 +23,7 @@ module Control.Effect.Internal
 -- * Arrows
 , Arrow(..)
 -- * Effects
+, Lift(..)
 , Nondeterminism(..)
 , Fail(..)
 ) where
@@ -32,6 +33,7 @@ import qualified Control.Arrow as A
 import Control.Category
 import Control.Monad (MonadPlus(..), (<=<))
 import Control.Monad.Fail
+import Data.Effect.Higher.Functor
 import Data.Effect.Union
 import Data.Functor.Classes (Show1(..), showsBinaryWith, showsUnaryWith)
 import qualified Data.TASequence.BinaryTree as TA
@@ -201,6 +203,13 @@ instance (Show result, Show1 (Union effects)) => Show (Effect effects result) wh
     Effect u q -> showsBinaryWith (liftShowsPrec hide hideList) showsPrec "Effect" d u q
     where hide = const (const (showString ""))
           hideList = const (showString "")
+
+
+newtype Lift effect m a = Lift { unLift :: effect a }
+  deriving (Functor)
+
+instance HFunctor (Lift effect) where
+  hfmap _ (Lift effect) = Lift effect
 
 
 data Nondeterminism result where
