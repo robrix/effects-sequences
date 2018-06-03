@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleContexts, GADTs, TypeOperators #-}
 module Control.Effect.Symbol where
 
-import Control.Applicative (Alternative(..))
 import Control.Effect
 import Control.Effect.Nondeterminism
 

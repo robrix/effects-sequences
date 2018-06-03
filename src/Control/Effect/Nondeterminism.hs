@@ -7,9 +7,10 @@ module Control.Effect.Nondeterminism
 , ifte
 , once
 , runNondeterminism
+, Alternative(..)
 ) where
 
-import Control.Applicative
+import Control.Applicative (Alternative(..))
 import Control.Effect
 import Control.Effect.Internal
 import Data.Foldable (asum)
