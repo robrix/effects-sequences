@@ -24,6 +24,7 @@ library
                      , Control.Effect.State
                      , Control.Effect.Symbol
                      , Control.Effect.Writer
+                     , Data.Effect.Higher.Functor
                      , Data.Effect.Sequence
                      , Data.Effect.Union
   build-depends:       base >=4.11 && <4.12
