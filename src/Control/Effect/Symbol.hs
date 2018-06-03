@@ -5,10 +5,10 @@ import Control.Applicative (Alternative(..))
 import Control.Effect
 import Control.Effect.Nondeterminism
 
-data Symbol token return where
-  Satisfy :: (token -> Bool) -> Symbol token token
+data Symbol return where
+  Satisfy :: (Char -> Bool) -> Symbol Char
 
-parse :: (Member Nondeterminism rest, (effects \\ S (Symbol token)) rest) => [token] -> Effect effects a -> Effect rest a
+parse :: (Member Nondeterminism rest, (effects \\ S Symbol) rest) => String -> Effect effects a -> Effect rest a
 parse ts = interpretStatefulEffect ts (\ ts a -> if null ts then pure a else empty) (\ ts eff yield -> case eff of
   Satisfy predicate -> case ts of
     t:ts | predicate t -> yield ts t
