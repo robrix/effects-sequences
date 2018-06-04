@@ -7,10 +7,10 @@ module Control.Effect
 , run
 , runM
 , relayEffect
-, interpretStatefulEffect
+, relayStatefulEffect
 , reinterpretEffect
 , relayEffects
-, interpretStatefulEffects
+, relayStatefulEffects
 , reinterpretEffects
 , interpose
 , interposeState

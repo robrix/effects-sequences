@@ -28,7 +28,7 @@ modify' f = do
 
 
 runState :: (effects \\ S (State state)) rest => state -> Effect effects a -> Effect rest (a, state)
-runState state = interpretStatefulEffect state (\ state' a -> pure (a, state')) (\ state' eff yield -> case eff of
+runState state = relayStatefulEffect state (\ state' a -> pure (a, state')) (\ state' eff yield -> case eff of
   Get -> yield state' state'
   Put state'' -> yield state'' ())
 
@@ -38,7 +38,7 @@ reinterpretState _ = reinterpretEffect @(State state) pure (\ eff yield -> case 
   Put s -> tell s >>= yield)
 
 runStateRW :: (effects \\ (S (Reader state) :+: S (Writer state))) rest => state -> Effect effects a -> Effect rest (a, state)
-runStateRW state = interpretStatefulEffects state (\ state' a -> pure (a, state')) (\ state' effs yield -> case decompose effs of
+runStateRW state = relayStatefulEffects state (\ state' a -> pure (a, state')) (\ state' effs yield -> case decompose effs of
   Left  (strengthenSingleton -> Ask)         -> yield state' state'
   Right (strengthenSingleton -> Tell state'') -> yield state'' ())
 

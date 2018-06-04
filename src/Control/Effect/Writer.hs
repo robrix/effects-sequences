@@ -11,4 +11,4 @@ tell = send . Tell
 
 
 runWriter :: (Monoid trace, (effects \\ S (Writer trace)) rest) => Effect effects a -> Effect rest (a, trace)
-runWriter = interpretStatefulEffect mempty (\ state a -> pure (a, state)) (\ traces (Tell trace) yield -> yield (traces <> trace) ())
+runWriter = relayStatefulEffect mempty (\ state a -> pure (a, state)) (\ traces (Tell trace) yield -> yield (traces <> trace) ())
