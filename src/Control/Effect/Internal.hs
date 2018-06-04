@@ -8,7 +8,7 @@ module Control.Effect.Internal
 -- * Handlers
 , run
 , runM
-, interpretEffects
+-- , interpretEffects
 -- , relayEffects
 -- , relayStatefulEffects
 -- , reinterpretEffects
@@ -46,15 +46,15 @@ import Prelude hiding (id, (.))
 
 data Eff effects scopes result
   = Pure result
-  | forall incremental . Eff   (Union effects Identity incremental)            (Queue effects scopes incremental result)
-  | forall incremental . Scope (Union scopes (Eff effects scopes) incremental) (Queue effects scopes incremental result)
-
+  | forall incremental . Eff   (Union effects Identity incremental) (Queue effects scopes incremental result)
+  | forall incremental . Scope (Union scopes (Eff effects scopes) result)
+  -- |                      Scope (g            (Prog f g            (Prog f g a)))
 
 send :: Member effect effects => effect Identity return -> Eff effects scopes return
 send effect = Eff (inject effect) id
 
 scope :: Member scope scopes => scope (Eff effects scopes) return -> Eff effects scopes return
-scope effect = Scope (inject effect) id
+scope effect = Scope (inject effect)
 
 class HFunctor scope => Scope scope where
   scopeMap :: Monad m => (m a -> m b) -> (scope m a -> scope m b)
@@ -82,25 +82,25 @@ runM (Eff u q) = unLift (strengthenSingleton u) >>= runM . dequeue q . runIdenti
 runM _         = error "impossible: Scope with no scopes"
 
 
-interpretEffects :: forall superEffect subEffect superEffect' superScope subScope superScope' a
-                 .  ( (superEffect \\ subEffect) superEffect'
-                    , (superScope \\ subScope) superScope'
-                    , HFunctor (Union superScope')
-                    , HFunctor (Union subScope)
-                    )
-                 => (forall result . Union subEffect Identity result -> Eff superEffect' superScope' result)
-                 -> (forall result . Union subScope (Eff superEffect' superScope') result -> Eff superEffect' superScope' result)
-                 -> Eff superEffect superScope a
-                 -> Eff superEffect' superScope' a
-interpretEffects handleEffect handleScope = loop
-  where loop :: forall a. Eff superEffect superScope a -> Eff superEffect' superScope' a
-        loop (Pure a)  = pure a
-        loop (Eff u q) = case delete u of
-          Left  u' -> Eff u' (unit (Arrow (loop . dequeue q)))
-          Right u' -> handleEffect u' >>= loop . dequeue q
-        loop (Scope u q) = case delete u of
-          Left  u' -> Scope (hmap loop u') (unit (Arrow (loop . dequeue q)))
-          Right u' -> handleScope (hmap loop u') >>= loop . dequeue q
+-- interpretEffects :: forall superEffect subEffect superEffect' superScope subScope superScope' a
+--                  .  ( (superEffect \\ subEffect) superEffect'
+--                     , (superScope \\ subScope) superScope'
+--                     , HFunctor (Union superScope')
+--                     , HFunctor (Union subScope)
+--                     )
+--                  => (forall result . Union subEffect Identity result -> Eff superEffect' superScope' result)
+--                  -> (forall result . Union subScope (Eff superEffect' superScope') result -> Eff superEffect' superScope' result)
+--                  -> Eff superEffect superScope a
+--                  -> Eff superEffect' superScope' a
+-- interpretEffects handleEffect handleScope = loop
+--   where loop :: forall a. Eff superEffect superScope a -> Eff superEffect' superScope' a
+--         loop (Pure a)  = pure a
+--         loop (Eff u q) = case delete u of
+--           Left  u' -> Eff u' (unit (Arrow (loop . dequeue q)))
+--           Right u' -> handleEffect u' >>= loop . dequeue q
+--         loop (Scope u) = case delete u of
+--           Left  u' -> Scope (hmap loop u')
+--           Right u' -> handleScope (hmap loop u')
 
 -- relayEffects :: forall superEffect subEffect superEffect' superScope subScope superScope' a c
 --                  .  ( (superEffect \\ subEffect) superEffect'

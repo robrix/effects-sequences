@@ -10,7 +10,7 @@ module Control.Effect
 -- , relayEffect
 -- , relayStatefulEffect
 -- , reinterpretEffect
-, interpretEffects
+-- , interpretEffects
 -- , relayEffects
 -- , relayStatefulEffects
 -- , reinterpretEffects
