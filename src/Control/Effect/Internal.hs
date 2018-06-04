@@ -59,24 +59,40 @@ runM (Pure a)     = pure a
 runM (Effect u q) = strengthenSingleton u >>= runM . dequeue q
 
 
-interpretEffects :: (super \\ sub) super' => (forall result . Union sub result -> Effect super' result) -> Effect super a -> Effect super' a
+interpretEffects :: (super \\ sub) super'
+                 => (forall result . Union sub result -> Effect super' result)
+                 -> Effect super a
+                 -> Effect super' a
 interpretEffects handler = relayEffects pure ((>>=) . handler)
 
-relayEffects :: (super \\ sub) super' => (a -> Effect super' a') -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+relayEffects :: (super \\ sub) super'
+             => (a -> Effect super' a')
+             -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a')
+             -> Effect super a
+             -> Effect super' a'
 relayEffects pure' bind = loop
   where loop (Pure a) = pure' a
         loop (Effect u q) = case delete u of
           Left  u' -> Effect u' (unit (Arrow (loop . dequeue q)))
           Right u' -> bind u' (loop . dequeue q)
 
-relayStatefulEffects :: (super \\ sub) super' => state -> (state -> a -> Effect super' a') -> (forall result . state -> Union sub result -> (state -> result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+relayStatefulEffects :: (super \\ sub) super'
+                     => state
+                     -> (state -> a -> Effect super' a')
+                     -> (forall result . state -> Union sub result -> (state -> result -> Effect super' a') -> Effect super' a')
+                     -> Effect super a
+                     -> Effect super' a'
 relayStatefulEffects initial pure' bind = loop initial
   where loop state (Pure a) = pure' state a
         loop state (Effect u q) = case delete u of
           Left  u' -> Effect u' (unit (Arrow (loop state . dequeue q)))
           Right u' -> bind state u' (\ state' -> loop state' . dequeue q)
 
-reinterpretEffects :: (sub >-> sub') super super' => (a -> Effect super' a') -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+reinterpretEffects :: (sub >-> sub') super super'
+                   => (a -> Effect super' a')
+                   -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a')
+                   -> Effect super a
+                   -> Effect super' a'
 reinterpretEffects pure' bind = loop
   where loop (Pure a)     = pure' a
         loop (Effect u q) = case split u of
@@ -84,20 +100,40 @@ reinterpretEffects pure' bind = loop
           Right u' -> bind u' (loop . dequeue q)
 
 
-interpretEffect :: (super \\ S effect) super' => (forall result . effect result -> Effect super' result) -> Effect super a -> Effect super' a
+interpretEffect :: (super \\ S effect) super'
+                => (forall result . effect result -> Effect super' result)
+                -> Effect super a
+                -> Effect super' a
 interpretEffect handler = interpretEffects (handler . strengthenSingleton)
 
-relayEffect :: (super \\ S effect) super' => (a -> Effect super' a') -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+relayEffect :: (super \\ S effect) super'
+            => (a -> Effect super' a')
+            -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a')
+            -> Effect super a
+            -> Effect super' a'
 relayEffect pure' bind = relayEffects pure' (bind . strengthenSingleton)
 
-relayStatefulEffect :: (super \\ S effect) super' => state -> (state -> a -> Effect super' a') -> (forall result . state -> effect result -> (state -> result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+relayStatefulEffect :: (super \\ S effect) super'
+                    => state
+                    -> (state -> a -> Effect super' a')
+                    -> (forall result . state -> effect result -> (state -> result -> Effect super' a') -> Effect super' a')
+                    -> Effect super a
+                    -> Effect super' a'
 relayStatefulEffect state pure' bind = relayStatefulEffects state pure' (\ state' -> bind state' . strengthenSingleton)
 
-reinterpretEffect :: (S effect >-> sub') super super' => (a -> Effect super' a') -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
+reinterpretEffect :: (S effect >-> sub') super super'
+                  => (a -> Effect super' a')
+                  -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a')
+                  -> Effect super a
+                  -> Effect super' a'
 reinterpretEffect pure' bind = reinterpretEffects pure' (bind . strengthenSingleton)
 
 
-interpose :: Member effect effects => (a -> Effect effects b) -> (forall result . effect result -> (result -> Effect effects b) -> Effect effects b) -> Effect effects a -> Effect effects b
+interpose :: Member effect effects
+          => (a -> Effect effects b)
+          -> (forall result . effect result -> (result -> Effect effects b) -> Effect effects b)
+          -> Effect effects a
+          -> Effect effects b
 interpose pure' bind = loop
   where loop (Pure a)           = pure' a
         loop (Effect u q)
