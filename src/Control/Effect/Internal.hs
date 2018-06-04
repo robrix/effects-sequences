@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, MultiParamTypeClasses, PolyKinds, RankNTypes, StandaloneDeriving, TypeOperators, TypeSynonymInstances, UndecidableInstances #-}
 module Control.Effect.Internal
 ( Eff(..)
+, Effect(..)
 -- * Constructing effects
 , send
 -- * Handlers
@@ -48,6 +49,10 @@ data Eff effects result
 
 send :: Member effect effects => effect return -> Eff effects return
 send effect = Eff (inject effect) id
+
+
+class HFunctor effect => Effect effect where
+  emap :: Monad m => (m a -> m b) -> effect m a -> effect m b
 
 
 run :: Eff Empty a -> a
