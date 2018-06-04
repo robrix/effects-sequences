@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveFunctor, ExistentialQuantification, FlexibleContexts, GADTs, GeneralizedNewtypeDeriving, MultiParamTypeClasses, PolyKinds, RankNTypes, StandaloneDeriving, TypeOperators, TypeSynonymInstances, UndecidableInstances #-}
 module Control.Effect.Internal
-( Effect(..)
+( Eff(..)
 -- * Constructing effects
 , send
 -- * Handlers
@@ -41,125 +41,125 @@ import Data.Functor.Classes (Show1(..), showsBinaryWith, showsUnaryWith)
 import qualified Data.TASequence.BinaryTree as TA
 import Prelude hiding (id, (.))
 
-data Effect effects result
+data Eff effects result
   = Pure result
-  | forall incremental . Effect (Union effects incremental) (Queue effects incremental result)
+  | forall incremental . Eff (Union effects incremental) (Queue effects incremental result)
 
 
-send :: Member effect effects => effect return -> Effect effects return
-send effect = Effect (inject effect) id
+send :: Member effect effects => effect return -> Eff effects return
+send effect = Eff (inject effect) id
 
 
-run :: Effect Empty a -> a
+run :: Eff Empty a -> a
 run (Pure a) = a
-run _        = error "impossible: Effect with no effects"
+run _        = error "impossible: Eff with no effects"
 
-runM :: Monad m => Effect (S m) a -> m a
-runM (Pure a)     = pure a
-runM (Effect u q) = strengthenSingleton u >>= runM . dequeue q
+runM :: Monad m => Eff (S m) a -> m a
+runM (Pure a)  = pure a
+runM (Eff u q) = strengthenSingleton u >>= runM . dequeue q
 
 
 interpretEffects :: (super \\ sub) super'
-                 => (forall result . Union sub result -> Effect super' result)
-                 -> Effect super a
-                 -> Effect super' a
+                 => (forall result . Union sub result -> Eff super' result)
+                 -> Eff super a
+                 -> Eff super' a
 interpretEffects handler = relayEffects pure ((>>=) . handler)
 
 relayEffects :: (super \\ sub) super'
-             => (a -> Effect super' a')
-             -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a')
-             -> Effect super a
-             -> Effect super' a'
+             => (a -> Eff super' a')
+             -> (forall result . Union sub result -> (result -> Eff super' a') -> Eff super' a')
+             -> Eff super a
+             -> Eff super' a'
 relayEffects pure' bind = loop
-  where loop (Pure a) = pure' a
-        loop (Effect u q) = case delete u of
-          Left  u' -> Effect u' (unit (Arrow (loop . dequeue q)))
+  where loop (Pure a)  = pure' a
+        loop (Eff u q) = case delete u of
+          Left  u' -> Eff u' (unit (Arrow (loop . dequeue q)))
           Right u' -> bind u' (loop . dequeue q)
 
 relayStatefulEffects :: (super \\ sub) super'
                      => state
-                     -> (state -> a -> Effect super' a')
-                     -> (forall result . state -> Union sub result -> (state -> result -> Effect super' a') -> Effect super' a')
-                     -> Effect super a
-                     -> Effect super' a'
+                     -> (state -> a -> Eff super' a')
+                     -> (forall result . state -> Union sub result -> (state -> result -> Eff super' a') -> Eff super' a')
+                     -> Eff super a
+                     -> Eff super' a'
 relayStatefulEffects initial pure' bind = loop initial
-  where loop state (Pure a) = pure' state a
-        loop state (Effect u q) = case delete u of
-          Left  u' -> Effect u' (unit (Arrow (loop state . dequeue q)))
+  where loop state (Pure a)  = pure' state a
+        loop state (Eff u q) = case delete u of
+          Left  u' -> Eff u' (unit (Arrow (loop state . dequeue q)))
           Right u' -> bind state u' (\ state' -> loop state' . dequeue q)
 
 reinterpretEffects :: (sub >-> sub') super super'
-                   => (a -> Effect super' a')
-                   -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a')
-                   -> Effect super a
-                   -> Effect super' a'
+                   => (a -> Eff super' a')
+                   -> (forall result . Union sub result -> (result -> Eff super' a') -> Eff super' a')
+                   -> Eff super a
+                   -> Eff super' a'
 reinterpretEffects pure' bind = loop
-  where loop (Pure a)     = pure' a
-        loop (Effect u q) = case split u of
-          Left  u' -> Effect u' (unit (Arrow (loop . dequeue q)))
+  where loop (Pure a)  = pure' a
+        loop (Eff u q) = case split u of
+          Left  u' -> Eff u' (unit (Arrow (loop . dequeue q)))
           Right u' -> bind u' (loop . dequeue q)
 
 
 interpretEffect :: (super \\ S effect) super'
-                => (forall result . effect result -> Effect super' result)
-                -> Effect super a
-                -> Effect super' a
+                => (forall result . effect result -> Eff super' result)
+                -> Eff super a
+                -> Eff super' a
 interpretEffect handler = interpretEffects (handler . strengthenSingleton)
 
 relayEffect :: (super \\ S effect) super'
-            => (a -> Effect super' a')
-            -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a')
-            -> Effect super a
-            -> Effect super' a'
+            => (a -> Eff super' a')
+            -> (forall result . effect result -> (result -> Eff super' a') -> Eff super' a')
+            -> Eff super a
+            -> Eff super' a'
 relayEffect pure' bind = relayEffects pure' (bind . strengthenSingleton)
 
 relayStatefulEffect :: (super \\ S effect) super'
                     => state
-                    -> (state -> a -> Effect super' a')
-                    -> (forall result . state -> effect result -> (state -> result -> Effect super' a') -> Effect super' a')
-                    -> Effect super a
-                    -> Effect super' a'
+                    -> (state -> a -> Eff super' a')
+                    -> (forall result . state -> effect result -> (state -> result -> Eff super' a') -> Eff super' a')
+                    -> Eff super a
+                    -> Eff super' a'
 relayStatefulEffect state pure' bind = relayStatefulEffects state pure' (\ state' -> bind state' . strengthenSingleton)
 
 reinterpretEffect :: (S effect >-> sub') super super'
-                  => (a -> Effect super' a')
-                  -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a')
-                  -> Effect super a
-                  -> Effect super' a'
+                  => (a -> Eff super' a')
+                  -> (forall result . effect result -> (result -> Eff super' a') -> Eff super' a')
+                  -> Eff super a
+                  -> Eff super' a'
 reinterpretEffect pure' bind = reinterpretEffects pure' (bind . strengthenSingleton)
 
 
 interpose :: Member effect effects
-          => (a -> Effect effects b)
-          -> (forall result . effect result -> (result -> Effect effects b) -> Effect effects b)
-          -> Effect effects a
-          -> Effect effects b
+          => (a -> Eff effects b)
+          -> (forall result . effect result -> (result -> Eff effects b) -> Eff effects b)
+          -> Eff effects a
+          -> Eff effects b
 interpose pure' bind = loop
   where loop (Pure a)           = pure' a
-        loop (Effect u q)
+        loop (Eff u q)
           | Just x <- project u = bind x k
-          | otherwise           = Effect u (unit (Arrow k))
+          | otherwise           = Eff u (unit (Arrow k))
           where k = loop . dequeue q
 
 interposeState :: Member effect effects
                => state
-               -> (state -> a -> Effect effects b)
-               -> (forall result . state -> effect result -> (state -> result -> Effect effects b) -> Effect effects b)
-               -> Effect effects a
-               -> Effect effects b
+               -> (state -> a -> Eff effects b)
+               -> (forall result . state -> effect result -> (state -> result -> Eff effects b) -> Eff effects b)
+               -> Eff effects a
+               -> Eff effects b
 interposeState state pure' bind = interposeSplit state pure' (\ state' eff yield loop -> bind state' eff (\ state'' -> loop state'' . yield))
 
 interposeSplit :: Member effect effects
                => state
-               -> (state -> a -> Effect effects b)
-               -> (forall result . state -> effect result -> (result -> Effect effects a) -> (state -> Effect effects a -> Effect effects b) -> Effect effects b)
-               -> Effect effects a
-               -> Effect effects b
+               -> (state -> a -> Eff effects b)
+               -> (forall result . state -> effect result -> (result -> Eff effects a) -> (state -> Eff effects a -> Eff effects b) -> Eff effects b)
+               -> Eff effects a
+               -> Eff effects b
 interposeSplit initial pure' bind = loop initial
-  where loop state (Pure a)     = pure' state a
-        loop state (Effect u q) = case project u of
+  where loop state (Pure a)  = pure' state a
+        loop state (Eff u q) = case project u of
           Just effect -> bind state effect (dequeue q) loop
-          _           -> Effect u (unit (Arrow (loop state . dequeue q)))
+          _           -> Eff u (unit (Arrow (loop state . dequeue q)))
 
 newtype Queue effects a b = Queue (TA.BinaryTree (Arrow effects) a b)
   deriving (Show)
@@ -177,15 +177,15 @@ unit = Queue . TA.tsingleton
 Queue TA.Empty |> a = unit a
 Queue q        |> a = Queue (q TA.|> a)
 
-dequeue :: Queue effects a b -> a -> Effect effects b
+dequeue :: Queue effects a b -> a -> Eff effects b
 dequeue (Queue q) x = case TA.tviewl q of
   TA.TAEmptyL -> pure x
-  k TA.:< t   -> case runArrow k x of
-    Pure y     -> dequeue (Queue t) y
-    Effect u q -> Effect u (q >>> Queue t)
+  k TA.:< t -> case runArrow k x of
+    Pure y  -> dequeue (Queue t) y
+    Eff u q -> Eff u (q >>> Queue t)
 
 
-newtype Arrow effects a b = Arrow { runArrow :: a -> Effect effects b }
+newtype Arrow effects a b = Arrow { runArrow :: a -> Eff effects b }
   deriving (Functor)
 
 instance Category (Arrow effects) where
@@ -214,36 +214,36 @@ instance Show (Arrow effects a b) where
   showsPrec d (Arrow _) = showParen (d > 10) $ showString "Arrow _"
 
 
-instance Functor (Effect effects) where
-  fmap f (Pure a)     = Pure (f a)
-  fmap f (Effect u q) = Effect u (q |> A.arr f)
+instance Functor (Eff effects) where
+  fmap f (Pure a)  = Pure (f a)
+  fmap f (Eff u q) = Eff u (q |> A.arr f)
 
-instance Applicative (Effect effects) where
+instance Applicative (Eff effects) where
   pure = Pure
-  Pure f     <*> Pure a     = Pure (f a)
-  Pure f     <*> Effect u q = Effect u (q |> A.arr f)
-  Effect u q <*> m          = Effect u (q |> Arrow (<$> m))
+  Pure f  <*> Pure a  = Pure (f a)
+  Pure f  <*> Eff u q = Eff u (q |> A.arr f)
+  Eff u q <*> m       = Eff u (q |> Arrow (<$> m))
 
-instance Member Nondeterminism effects => Alternative (Effect effects) where
+instance Member Nondeterminism effects => Alternative (Eff effects) where
   empty = send Zero
   l <|> r = send Plus >>= \ cond -> if cond then l else r
 
-instance Monad (Effect effects) where
+instance Monad (Eff effects) where
   return = pure
-  Pure a     >>= f = f a
-  Effect u q >>= f = Effect u (q |> Arrow f)
+  Pure a  >>= f = f a
+  Eff u q >>= f = Eff u (q |> Arrow f)
 
-instance Member Fail effects => MonadFail (Effect effects) where
+instance Member Fail effects => MonadFail (Eff effects) where
   fail = send . Fail
 
-instance Member Nondeterminism effects => MonadPlus (Effect effects) where
+instance Member Nondeterminism effects => MonadPlus (Eff effects) where
   mzero = empty
   mplus = (<|>)
 
-instance (Show result, Show1 (Union effects)) => Show (Effect effects result) where
+instance (Show result, Show1 (Union effects)) => Show (Eff effects result) where
   showsPrec d eff = case eff of
     Pure a     -> showsUnaryWith showsPrec "Pure" d a
-    Effect u q -> showsBinaryWith (liftShowsPrec hide hideList) showsPrec "Effect" d u q
+    Eff u q -> showsBinaryWith (liftShowsPrec hide hideList) showsPrec "Eff" d u q
     where hide = const (const (showString ""))
           hideList = const (showString "")
 

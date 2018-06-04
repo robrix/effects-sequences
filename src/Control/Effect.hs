@@ -1,6 +1,6 @@
 {-# LANGUAGE ExplicitNamespaces #-}
 module Control.Effect
-( Effect
+( Eff
 -- * Constructing effects
 , send
 -- * Handlers

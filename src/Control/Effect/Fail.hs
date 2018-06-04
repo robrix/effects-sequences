@@ -7,5 +7,5 @@ module Control.Effect.Fail
 import Control.Effect
 import Control.Effect.Internal
 
-runFail :: (effects \\ S Fail) rest => Effect effects a -> Effect rest (Either String a)
+runFail :: (effects \\ S Fail) rest => Eff effects a -> Eff rest (Either String a)
 runFail = relayEffect (pure . Right) (\ (Fail s) _ -> pure (Left s))
