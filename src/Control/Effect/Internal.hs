@@ -55,7 +55,7 @@ run (Pure a) = a
 run _        = error "impossible: Effect with no effects"
 
 runM :: Monad m => Effect (S m) a -> m a
-runM (Pure a) = pure a
+runM (Pure a)     = pure a
 runM (Effect u q) = strengthenSingleton u >>= runM . dequeue q
 
 
