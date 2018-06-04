@@ -6,9 +6,11 @@ module Control.Effect.Internal
 -- * Handlers
 , run
 , runM
+, interpretEffects
 , relayEffects
 , relayStatefulEffects
 , reinterpretEffects
+, interpretEffect
 , relayEffect
 , relayStatefulEffect
 , reinterpretEffect
@@ -57,6 +59,9 @@ runM (Pure a) = pure a
 runM (Effect u q) = strengthenSingleton u >>= runM . dequeue q
 
 
+interpretEffects :: (super \\ sub) super' => (forall result . Union sub result -> Effect super' result) -> Effect super a -> Effect super' a
+interpretEffects handler = relayEffects pure ((>>=) . handler)
+
 relayEffects :: (super \\ sub) super' => (a -> Effect super' a') -> (forall result . Union sub result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
 relayEffects pure' bind = loop
   where loop (Pure a) = pure' a
@@ -78,6 +83,9 @@ reinterpretEffects pure' bind = loop
           Left  u' -> Effect u' (unit (Arrow (loop . dequeue q)))
           Right u' -> bind u' (loop . dequeue q)
 
+
+interpretEffect :: (super \\ S effect) super' => (forall result . effect result -> Effect super' result) -> Effect super a -> Effect super' a
+interpretEffect handler = interpretEffects (handler . strengthenSingleton)
 
 relayEffect :: (super \\ S effect) super' => (a -> Effect super' a') -> (forall result . effect result -> (result -> Effect super' a') -> Effect super' a') -> Effect super a -> Effect super' a'
 relayEffect pure' bind = relayEffects pure' (bind . strengthenSingleton)
