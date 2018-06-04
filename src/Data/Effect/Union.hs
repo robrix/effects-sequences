@@ -1,4 +1,4 @@
-{-# LANGUAGE AllowAmbiguousTypes, ConstraintKinds, DataKinds, ExistentialQuantification, FlexibleContexts, FlexibleInstances, FunctionalDependencies, ScopedTypeVariables, TypeApplications, TypeFamilies, TypeOperators, UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes, ConstraintKinds, DataKinds, ExistentialQuantification, FlexibleContexts, FlexibleInstances, FunctionalDependencies, PolyKinds, ScopedTypeVariables, TypeApplications, TypeFamilies, TypeOperators, UndecidableInstances #-}
 module Data.Effect.Union
 ( Seq
 , S
@@ -13,6 +13,8 @@ module Data.Effect.Union
 , decompose
 , Subseq
 , weaken
+, weakenLeft
+, weakenRight
 , strengthen
 , type (>->)
 , replace
@@ -23,31 +25,32 @@ module Data.Effect.Union
 
 import Control.Monad ((<=<))
 import Data.Bifunctor
+import Data.Effect.Higher.Functor
 import Data.Effect.Sequence
 import Data.Functor.Classes (Show1(..))
 import Data.Kind (Type)
 import Prelude hiding (splitAt)
 import Unsafe.Coerce
 
-data Union (members :: Seq (Type -> Type)) a = forall member . Union {-# UNPACK #-} !Int (member a)
+data Union (members :: Seq ((k -> *) -> k -> Type)) (m :: k -> Type) (a :: k) = forall member . Union {-# UNPACK #-} !Int (member m a)
 
 type Member member members = Subseq (S member) members
 
-inject :: Member member members => member a -> Union members a
+inject :: Member member members => member m a -> Union members m a
 inject = weaken . weakenSingleton
 
-project :: Member member members => Union members a -> Maybe (member a)
+project :: Member member members => Union members m a -> Maybe (member m a)
 project = fmap strengthenSingleton . strengthen
 
 
-weakenSingleton :: member a -> Union (S member) a
+weakenSingleton :: member m a -> Union (S member) m a
 weakenSingleton = Union 0
 
-strengthenSingleton :: Union (S member) a -> member a
+strengthenSingleton :: Union (S member) m a -> member m a
 strengthenSingleton (Union _ member) = unsafeCoerce member
 
 
-decompose :: Union (left ':+: right) a -> Either (Union left a) (Union right a)
+decompose :: Union (left ':+: right) m a -> Either (Union left m a) (Union right m a)
 decompose (Union n member)
   | even n    = Left  (Union (n `div` 2) member)
   | otherwise = Right (Union (n `div` 2) member)
@@ -55,31 +58,31 @@ decompose (Union n member)
 
 type Subseq sub super = SubseqAt (PathTo sub super) sub super
 
-weaken :: forall sub super a . Subseq sub super => Union sub a -> Union super a
+weaken :: forall sub super m a . Subseq sub super => Union sub m a -> Union super m a
 weaken = weakenAt @(PathTo sub super)
 
-strengthen :: forall sub super a . Subseq sub super => Union super a -> Maybe (Union sub a)
+strengthen :: forall sub super m a . Subseq sub super => Union super m a -> Maybe (Union sub m a)
 strengthen = strengthenAt @(PathTo sub super)
 
 
 type (sub >-> sub') super super' = ReplaceAt (PathTo sub super) sub sub' super super'
 
-replace :: forall sub sub' super super' a . (sub >-> sub') super super' => (Union sub a -> Union sub' a) -> Union super a -> Union super' a
+replace :: forall sub sub' super super' m a . (sub >-> sub') super super' => (Union sub m a -> Union sub' m a) -> Union super m a -> Union super' m a
 replace = replaceAt @(PathTo sub super)
 
-split :: forall sub sub' super super' a . (sub >-> sub') super super' => Union super a -> Either (Union super' a) (Union sub a)
+split :: forall sub sub' super super' m a . (sub >-> sub') super super' => Union super m a -> Either (Union super' m a) (Union sub m a)
 split = splitAt @(PathTo sub super)
 
 
 type (super \\ sub) difference = DifferenceAt (PathTo sub super) sub super difference
 
-delete :: forall super sub difference a . (super \\ sub) difference => Union super a -> Either (Union difference a) (Union sub a)
+delete :: forall super sub difference m a . (super \\ sub) difference => Union super m a -> Either (Union difference m a) (Union sub m a)
 delete = deleteAt @(PathTo sub super)
 
 
 class SubseqAt (path :: [Side]) sub super | path super -> sub where
-  weakenAt     :: Union sub   a ->        Union super a
-  strengthenAt :: Union super a -> Maybe (Union sub   a)
+  weakenAt     :: Union sub   m a ->        Union super m a
+  strengthenAt :: Union super m a -> Maybe (Union sub   m a)
 
 instance SubseqAt '[] sub sub where
   weakenAt     = id
@@ -101,8 +104,8 @@ class (SubseqAt path sub super, SubseqAt path sub' super') => ReplaceAt path sub
   , super sub super' -> sub'
   , super sub' super' -> sub
   , sub sub' super' -> super where
-  replaceAt :: (Union sub a -> Union sub' a) -> Union super a -> Union super' a
-  splitAt :: Union super a -> Either (Union super' a) (Union sub a)
+  replaceAt :: (Union sub m a -> Union sub' m a) -> Union super m a -> Union super' m a
+  splitAt :: Union super m a -> Either (Union super' m a) (Union sub m a)
 
 instance ReplaceAt '[] sub sub' sub sub' where
   replaceAt = ($)
@@ -117,8 +120,8 @@ instance ReplaceAt rest sub sub' right right' => ReplaceAt ('R ': rest) sub sub'
   splitAt = first weakenRight . splitAt @rest <=< splitRight
 
 
-class SubseqAt path sub super => DifferenceAt path sub super (difference :: Seq (Type -> Type)) | path super -> sub difference, super difference -> sub where
-  deleteAt :: Union super a -> Either (Union difference a) (Union sub a)
+class SubseqAt path sub super => DifferenceAt path sub super (difference :: Seq ((Type -> Type) -> Type -> Type)) | path super -> sub difference, super difference -> sub where
+  deleteAt :: Union super m a -> Either (Union difference m a) (Union sub m a)
 
 instance Diff sub Empty ~ sub' => DifferenceAt '[] sub' sub Empty where
   deleteAt = Right
@@ -136,35 +139,47 @@ instance DifferenceAt (next ': rest) sub right right' => DifferenceAt ('R ': nex
   deleteAt = either (Left . weakenLeft) (first weakenRight . deleteAt @(next ': rest)) . decompose
 
 
-weakenLeft :: Union left a -> Union (left ':+: right) a
+weakenLeft :: Union left m a -> Union (left ':+: right) m a
 weakenLeft (Union n t) = Union (2 * n) t
 
-weakenRight :: Union right a -> Union (left ':+: right) a
+weakenRight :: Union right m a -> Union (left ':+: right) m a
 weakenRight (Union n t) = Union (1 + (2 * n)) t
 
 
-replaceLeft :: (Union left a -> Union left' a) -> Union (left ':+: right) a ->  Union (left' ':+: right) a
+replaceLeft :: (Union left m a -> Union left' m a) -> Union (left ':+: right) m a ->  Union (left' ':+: right) m a
 replaceLeft f = either (weakenLeft . f) weakenRight . decompose
 
-replaceRight :: (Union right a -> Union right' a) -> Union (left ':+: right) a ->  Union (left ':+: right') a
+replaceRight :: (Union right m a -> Union right' m a) -> Union (left ':+: right) m a ->  Union (left ':+: right') m a
 replaceRight f = either weakenLeft (weakenRight . f) . decompose
 
 
-splitLeft :: Union (left ':+: right) a -> Either (Union (left' ':+: right) a) (Union left a)
+splitLeft :: Union (left ':+: right) m a -> Either (Union (left' ':+: right) m a) (Union left m a)
 splitLeft = either Right (Left . weakenRight) . decompose
 
-splitRight :: Union (left ':+: right) a -> Either (Union (left ':+: right') a) (Union right a)
+splitRight :: Union (left ':+: right) m a -> Either (Union (left ':+: right') m a) (Union right m a)
 splitRight = either (Left . weakenLeft) Right . decompose
 
 
-instance Show (member a) => Show (Union (S member) a) where
+instance Show (member m a) => Show (Union (S member) m a) where
   showsPrec d = showsPrec d . strengthenSingleton
 
-instance (Show (Union left a), Show (Union right a)) => Show (Union (left ':+: right) a) where
+instance (Show (Union left m a), Show (Union right m a)) => Show (Union (left ':+: right) m a) where
   showsPrec d = either (showsPrec d) (showsPrec d) . decompose
 
-instance Show1 member => Show1 (Union (S member)) where
+instance Show1 (member m) => Show1 (Union (S member) m) where
   liftShowsPrec sp sl d = liftShowsPrec sp sl d . strengthenSingleton
 
-instance (Show1 (Union left), Show1 (Union right)) => Show1 (Union (left ':+: right)) where
+instance (Show1 (Union left m), Show1 (Union right m)) => Show1 (Union (left ':+: right) m) where
   liftShowsPrec sp sl d = either (liftShowsPrec sp sl d) (liftShowsPrec sp sl d) . decompose
+
+instance Functor (member f) => Functor (Union (S member) f) where
+  fmap f = weakenSingleton . fmap f . strengthenSingleton
+
+instance (Functor (Union left f), Functor (Union right f)) => Functor (Union (left :+: right) f) where
+  fmap f = either (weakenLeft . fmap f) (weakenRight . fmap f) . decompose
+
+instance HFunctor member => HFunctor (Union (S member)) where
+  hmap f = weakenSingleton . hmap f . strengthenSingleton
+
+instance (HFunctor (Union left), HFunctor (Union right)) => HFunctor (Union (left :+: right)) where
+  hmap f = either (weakenLeft . hmap f) (weakenRight . hmap f) . decompose

@@ -6,17 +6,17 @@ module Control.Effect
 -- * Handlers
 , run
 , runM
-, interpretEffect
-, relayEffect
-, relayStatefulEffect
-, reinterpretEffect
+-- , interpretEffect
+-- , relayEffect
+-- , relayStatefulEffect
+-- , reinterpretEffect
 , interpretEffects
-, relayEffects
-, relayStatefulEffects
-, reinterpretEffects
-, interpose
-, interposeState
-, interposeSplit
+-- , relayEffects
+-- , relayStatefulEffects
+-- , reinterpretEffects
+-- , interpose
+-- , interposeState
+-- , interposeSplit
 -- * Unions
 , Member
 , Seq
