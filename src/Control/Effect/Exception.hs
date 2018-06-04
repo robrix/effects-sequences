@@ -12,4 +12,4 @@ catchError :: Member (Exception exception) effects => Effect effects a -> (excep
 catchError action handler = interpose pure (\ (Throw exception) _ -> handler exception) action
 
 runException :: (effects \\ S (Exception exception)) rest => Effect effects a -> Effect rest (Either exception a)
-runException = interpretEffect (pure . Right) (\ (Throw exception) _ -> pure (Left exception))
+runException = relayEffect (pure . Right) (\ (Throw exception) _ -> pure (Left exception))

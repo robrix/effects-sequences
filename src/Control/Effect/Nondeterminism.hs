@@ -42,6 +42,6 @@ once m = msplit m >>= maybe empty (pure . fst)
 
 
 runNondeterminism :: (Alternative f, (effects \\ S Nondeterminism) rest) => Effect effects a -> Effect rest (f a)
-runNondeterminism = interpretEffect (pure . pure) (\ eff yield -> case eff of
+runNondeterminism = relayEffect (pure . pure) (\ eff yield -> case eff of
   Zero -> pure empty
   Plus -> (<|>) <$> yield True <*> yield False)

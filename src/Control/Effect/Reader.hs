@@ -20,7 +20,7 @@ local f m = do
 
 
 runReader :: (effects \\ S (Reader context)) rest => context -> Effect effects a -> Effect rest a
-runReader context = interpretEffect pure (\ Ask yield -> yield context)
+runReader context = relayEffect pure (\ Ask yield -> yield context)
 
 
 deriving instance Show (Reader context result)
