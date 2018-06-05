@@ -37,7 +37,6 @@ import qualified Control.Arrow as A
 import Control.Category
 import Control.Monad (MonadPlus(..), (<=<))
 import Control.Monad.Fail
-import Data.Effect.Higher.Functor
 import Data.Effect.Union
 import Data.Functor.Identity
 import qualified Data.TASequence.BinaryTree as TA
@@ -55,7 +54,10 @@ send effect = Eff (inject effect) id
 scope :: Member scope scopes => scope (Eff effects scopes) return -> Eff effects scopes return
 scope effect = Scope (inject effect)
 
-class HFunctor scope => Scope scope where
+type f ~> g = forall a . f a -> g a
+
+class Scope scope where
+  hmap :: (a ~> b) -> (scope a ~> scope b)
   scopeMap :: Monad m => (m a -> m b) -> (scope m a -> scope m b)
   handle :: (Monad m, Monad n, Functor c) => c () -> (forall x . c (m x) -> n (c x)) -> (scope m a -> scope n (c a))
   -- handle :: (Monad m, Monad n) => (forall x . m x -> n x) -> (scope m a -> scope n a)
@@ -84,8 +86,8 @@ runM _         = error "impossible: Scope with no scopes"
 -- interpretEffects :: forall superEffect subEffect superEffect' superScope subScope superScope' a
 --                  .  ( (superEffect \\ subEffect) superEffect'
 --                     , (superScope \\ subScope) superScope'
---                     , HFunctor (Union superScope')
---                     , HFunctor (Union subScope)
+--                     , Scope (Union superScope')
+--                     , Scope (Union subScope)
 --                     )
 --                  => (forall result . Union subEffect Identity result -> Eff superEffect' superScope' result)
 --                  -> (forall result . Union subScope (Eff superEffect' superScope') result -> Eff superEffect' superScope' result)
@@ -134,8 +136,8 @@ runM _         = error "impossible: Scope with no scopes"
 
 
 -- relayStatefulEffects :: ( (super \\ sub) super'
---                         , HFunctor (Union super')
---                         , HFunctor (Union sub)
+--                         , Scope (Union super')
+--                         , Scope (Union sub)
 --                         )
 --                      => state
 --                      -> (state -> a -> Eff super' a')
@@ -149,8 +151,8 @@ runM _         = error "impossible: Scope with no scopes"
 --           Right u' -> bind state u' (\ state' -> loop state' . dequeue q)
 --
 -- reinterpretEffects :: ( (sub >-> sub') super super'
---                       , HFunctor (Union super')
---                       , HFunctor (Union sub)
+--                       , Scope (Union super')
+--                       , Scope (Union sub)
 --                       )
 --                    => (a -> Eff super' a')
 --                    -> (forall result . Union sub (Eff super') result -> (result -> Eff super' a') -> Eff super' a')
@@ -164,8 +166,8 @@ runM _         = error "impossible: Scope with no scopes"
 --
 --
 -- interpretEffect :: ( (super \\ S effect) super'
---                    , HFunctor (Union super')
---                    , HFunctor effect
+--                    , Scope (Union super')
+--                    , Scope effect
 --                    )
 --                 => (forall result . effect (Eff super') result -> Eff super' result)
 --                 -> Eff super a
@@ -173,8 +175,8 @@ runM _         = error "impossible: Scope with no scopes"
 -- interpretEffect handler = interpretEffects (handler . strengthenSingleton)
 --
 -- relayEffect :: ( (super \\ S effect) super'
---                , HFunctor (Union super')
---                , HFunctor effect
+--                , Scope (Union super')
+--                , Scope effect
 --                )
 --             => (a -> Eff super' a')
 --             -> (forall result . effect (Eff super') result -> (result -> Eff super' a') -> Eff super' a')
@@ -183,8 +185,8 @@ runM _         = error "impossible: Scope with no scopes"
 -- relayEffect pure' bind = relayEffects pure' (bind . strengthenSingleton)
 --
 -- relayStatefulEffect :: ( (super \\ S effect) super'
---                        , HFunctor (Union super')
---                        , HFunctor effect
+--                        , Scope (Union super')
+--                        , Scope effect
 --                        )
 --                     => state
 --                     -> (state -> a -> Eff super' a')
@@ -194,8 +196,8 @@ runM _         = error "impossible: Scope with no scopes"
 -- relayStatefulEffect state pure' bind = relayStatefulEffects state pure' (\ state' -> bind state' . strengthenSingleton)
 --
 -- reinterpretEffect :: ( (S effect >-> sub') super super'
---                      , HFunctor (Union super')
---                      , HFunctor effect
+--                      , Scope (Union super')
+--                      , Scope effect
 --                      )
 --                   => (a -> Eff super' a')
 --                   -> (forall result . effect (Eff super') result -> (result -> Eff super' a') -> Eff super' a')
@@ -319,7 +321,7 @@ instance Member Nondeterminism effects => MonadPlus (Eff effects scopes) where
 newtype Lift effect m a = Lift { unLift :: effect (m a) }
   deriving (Functor)
 
-instance Functor effect => HFunctor (Lift effect) where
+instance Functor effect => Scope (Lift effect) where
   hmap f (Lift effect) = Lift (fmap f effect)
 
 
@@ -333,7 +335,7 @@ deriving instance Show (Nondeterminism m result)
 newtype Fail m result = Fail String
   deriving (Show)
 
--- instance HFunctor Fail where
+-- instance Scope Fail where
 --   hmap _ (Fail s) = Fail s
 --
 -- instance Scope Fail where
