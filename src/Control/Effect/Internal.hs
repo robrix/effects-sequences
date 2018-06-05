@@ -46,7 +46,7 @@ import Prelude hiding (id, (.))
 data Eff effects scopes result
   = Pure result
   | forall incremental . Eff   (Union effects Identity incremental) (Queue effects scopes incremental result)
-  | forall incremental . Scope (Union scopes (Eff effects scopes) result)
+  | Scope (Union scopes (Eff effects scopes) result)
   -- |                      Scope (g            (Prog f g            (Prog f g a)))
 
 send :: Member effect effects => effect Identity return -> Eff effects scopes return
