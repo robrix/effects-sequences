@@ -25,7 +25,6 @@ module Data.Effect.Union
 
 import Control.Monad ((<=<))
 import Data.Bifunctor
-import Data.Effect.Higher.Functor
 import Data.Effect.Sequence
 import Data.Functor.Classes (Show1(..))
 import Data.Kind (Type)
@@ -177,9 +176,3 @@ instance Functor (member f) => Functor (Union (S member) f) where
 
 instance (Functor (Union left f), Functor (Union right f)) => Functor (Union (left :+: right) f) where
   fmap f = either (weakenLeft . fmap f) (weakenRight . fmap f) . decompose
-
-instance HFunctor member => HFunctor (Union (S member)) where
-  hmap f = weakenSingleton . hmap f . strengthenSingleton
-
-instance (HFunctor (Union left), HFunctor (Union right)) => HFunctor (Union (left :+: right)) where
-  hmap f = either (weakenLeft . hmap f) (weakenRight . hmap f) . decompose
