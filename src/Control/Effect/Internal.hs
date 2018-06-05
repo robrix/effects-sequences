@@ -54,8 +54,6 @@ send effect = Eff (inject effect) id
 scope :: Member scope scopes => scope (Eff effects scopes) return -> Eff effects scopes return
 scope effect = Scope (inject effect)
 
-type f ~> g = forall a . f a -> g a
-
 class Scope scope where
   scopeMap :: Monad m => (m a -> m b) -> (scope m a -> scope m b)
   handleState :: (Monad m, Monad n, Functor c) => c () -> (forall x . c (m x) -> n (c x)) -> (scope m a -> scope n (c a))
