@@ -112,7 +112,7 @@ runM _         = error "impossible: Scope with no scopes"
 --                  => c ()
 --                  -> (forall x . x -> Eff superEffect' superScope' (c x))
 --                  -> (forall x result . Union subEffect Identity result -> (result -> Eff superEffect' superScope' (c x)) -> Eff superEffect' superScope' (c x))
---                  -> (forall x result . Union subScope (Eff superEffect' superScope') result -> (result -> Eff superEffect' superScope' (c x)) -> Eff superEffect' superScope' (c x))
+--                  -> (forall x . Union subScope (Eff superEffect' superScope') (c x) -> Eff superEffect' superScope' (c x))
 --                  -> (forall x . c (Eff superEffect superScope x) -> Eff superEffect' superScope' (c x))
 --                  -> Eff superEffect superScope a
 --                  -> Eff superEffect' superScope' (c a)
@@ -123,10 +123,9 @@ runM _         = error "impossible: Scope with no scopes"
 --           Left  u' -> Eff u' (unit (Arrow yield))
 --           Right u' -> handleEffect u' yield
 --           where yield = loop . dequeue q
---         loop (Scope u q) = case delete u of
---           Left  u' -> Scope (handleState initial distScope u') (unit (Arrow yield))
---           Right u' -> handleScope (scopeMap loop u') yield
---           where yield = loop . dequeue q
+--         loop (Scope u) = case delete u of
+--           Left  u' -> Scope (handleState initial distScope u')
+--           Right u' -> handleScope (scopeMap loop u')
 
 -- relayStatefulEffects :: ( (super \\ sub) super'
 --                         , Scope (Union super')
