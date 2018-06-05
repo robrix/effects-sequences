@@ -39,7 +39,6 @@ import Control.Monad (MonadPlus(..), (<=<))
 import Control.Monad.Fail
 import Data.Effect.Higher.Functor
 import Data.Effect.Union
-import Data.Functor.Classes (Show1(..), showsBinaryWith, showsUnaryWith)
 import Data.Functor.Identity
 import qualified Data.TASequence.BinaryTree as TA
 import Prelude hiding (id, (.))
@@ -316,13 +315,6 @@ instance Member Nondeterminism effects => MonadPlus (Eff effects scopes) where
   mzero = empty
   mplus = (<|>)
 
--- instance (Show result, Show1 (Union effects (Eff effects scopes))) => Show (Eff effects scopes result) where
---   showsPrec d eff = case eff of
---     Pure a  -> showsUnaryWith showsPrec "Pure" d a
---     Eff u q -> showsBinaryWith (liftShowsPrec hide hideList) showsPrec "Eff" d u q
---     where hide = const (const (showString ""))
---           hideList = const (showString "")
-
 
 newtype Lift effect m a = Lift { unLift :: effect (m a) }
   deriving (Functor)
@@ -337,15 +329,9 @@ data Nondeterminism m result where
 
 deriving instance Show (Nondeterminism m result)
 
-instance Show1 (Nondeterminism m) where
-  liftShowsPrec _ _ = showsPrec
-
 
 newtype Fail m result = Fail String
   deriving (Show)
-
-instance Show1 (Fail m) where
-  liftShowsPrec _ _ = showsPrec
 
 -- instance HFunctor Fail where
 --   hmap _ (Fail s) = Fail s
