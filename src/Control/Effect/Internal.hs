@@ -60,7 +60,9 @@ class Scope scope where
   hmap :: (a ~> b) -> (scope a ~> scope b)
   scopeMap :: Monad m => (m a -> m b) -> (scope m a -> scope m b)
   handleState :: (Monad m, Monad n, Functor c) => c () -> (forall x . c (m x) -> n (c x)) -> (scope m a -> scope n (c a))
-  -- handle :: (Monad m, Monad n) => (forall x . m x -> n x) -> (scope m a -> scope n a)
+
+  handle :: (Monad m, Monad n) => (forall x . m x -> n x) -> (scope m a -> scope n a)
+  handle f s = fmap runIdentity `scopeMap` handleState (Identity ()) (\ (Identity m) -> Identity <$> f m) s
 
 instance Scope member => Scope (Union (S member)) where
   scopeMap f = weakenSingleton . scopeMap f . strengthenSingleton
