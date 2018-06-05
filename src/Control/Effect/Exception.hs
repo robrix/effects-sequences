@@ -28,8 +28,6 @@ runException (Eff u q) = case strengthenSingleton <$> delete u of
   Right (Throw exc) -> pure (Left exc)
 runException (Scope u) = case strengthenSingleton <$> delete u of
   Left u' -> Scope (handleState (Right ()) (either (return . Left) runException) u')
-  -- where hdl :: Either exception (Eff effects scopes x) -> Eff effects' scopes' (Either exception x)
-  --       hdl = either (return . Left) runException
   Right (Catch action handler k) -> do
     action' <- runException action
     case action' of
@@ -39,4 +37,3 @@ runException (Scope u) = case strengthenSingleton <$> delete u of
           Left exc -> pure (Left exc)
           Right a -> runException (k a)
       Right a -> runException (k a)
--- (∀x . Either e (Prog (HExc e+sig) x) → Prog sig (Either e x))
