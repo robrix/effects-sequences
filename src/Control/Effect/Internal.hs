@@ -57,7 +57,6 @@ scope effect = Scope (inject effect)
 type f ~> g = forall a . f a -> g a
 
 class Scope scope where
-  hmap :: (a ~> b) -> (scope a ~> scope b)
   scopeMap :: Monad m => (m a -> m b) -> (scope m a -> scope m b)
   handleState :: (Monad m, Monad n, Functor c) => c () -> (forall x . c (m x) -> n (c x)) -> (scope m a -> scope n (c a))
 
@@ -324,7 +323,6 @@ newtype Lift effect m a = Lift { unLift :: effect (m a) }
   deriving (Functor)
 
 instance Functor effect => Scope (Lift effect) where
-  hmap f (Lift effect) = Lift (fmap f effect)
   scopeMap f (Lift effect) = Lift (f <$> effect)
   handleState c hdl (Lift effect) = Lift (hdl . (<$ c) <$> effect)
   handle f (Lift effect) = Lift (f <$> effect)
