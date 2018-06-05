@@ -327,6 +327,7 @@ instance Functor effect => Scope (Lift effect) where
   hmap f (Lift effect) = Lift (fmap f effect)
   scopeMap f (Lift effect) = Lift (f <$> effect)
   handleState c hdl (Lift effect) = Lift (hdl . (<$ c) <$> effect)
+  handle f (Lift effect) = Lift (f <$> effect)
 
 
 data Nondeterminism m result where
