@@ -128,12 +128,6 @@ runM _         = error "impossible: Scope with no scopes"
 --           Right u' -> handleScope (scopeMap loop u') yield
 --           where yield = loop . dequeue q
 
-        -- runState :: Syntax sig ⇒ (s, Prog (HState s+sig) a) → Prog sig (s,a)
-        -- runState s (Other op) = Op (handleState (s, ()) (uncurry runState) op)
-
--- runException :: Eff … a -> Eff … (Either err a)
-
-
 -- relayStatefulEffects :: ( (super \\ sub) super'
 --                         , Scope (Union super')
 --                         , Scope (Union sub)
