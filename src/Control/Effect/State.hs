@@ -35,7 +35,7 @@ runState s (Eff u q) = case strengthenSingleton <$> delete u of
   Right Get -> yield s s
   Right (Put s') -> yield s' ()
   where yield s = runState s . dequeue q
-runState s (Scope u) = Scope (handle (s, ()) (uncurry runState) u)
+runState s (Scope u) = Scope (handleState (s, ()) (uncurry runState) u)
 
 
 -- runState :: (effects \\ S (State state)) rest => state -> Eff effects scopes a -> Eff rest scopes (a, state)

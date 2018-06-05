@@ -59,18 +59,18 @@ type f ~> g = forall a . f a -> g a
 class Scope scope where
   hmap :: (a ~> b) -> (scope a ~> scope b)
   scopeMap :: Monad m => (m a -> m b) -> (scope m a -> scope m b)
-  handle :: (Monad m, Monad n, Functor c) => c () -> (forall x . c (m x) -> n (c x)) -> (scope m a -> scope n (c a))
+  handleState :: (Monad m, Monad n, Functor c) => c () -> (forall x . c (m x) -> n (c x)) -> (scope m a -> scope n (c a))
   -- handle :: (Monad m, Monad n) => (forall x . m x -> n x) -> (scope m a -> scope n a)
 
 instance Scope member => Scope (Union (S member)) where
   scopeMap f = weakenSingleton . scopeMap f . strengthenSingleton
 
-  handle c hdl = weakenSingleton . handle c hdl . strengthenSingleton
+  handleState c hdl = weakenSingleton . handleState c hdl . strengthenSingleton
 
 instance (Scope (Union left), Scope (Union right)) => Scope (Union (left :+: right)) where
   scopeMap f = either (weakenLeft . scopeMap f) (weakenRight . scopeMap f) . decompose
 
-  handle c hdl = either (weakenLeft . handle c hdl) (weakenRight . handle c hdl) . decompose
+  handleState c hdl = either (weakenLeft . handleState c hdl) (weakenRight . handleState c hdl) . decompose
 
 
 run :: Eff Empty Empty a -> a
@@ -125,12 +125,12 @@ runM _         = error "impossible: Scope with no scopes"
 --           Right u' -> handleEffect u' yield
 --           where yield = loop . dequeue q
 --         loop (Scope u q) = case delete u of
---           Left  u' -> Scope (handle initial distScope u') (unit (Arrow yield))
+--           Left  u' -> Scope (handleState initial distScope u') (unit (Arrow yield))
 --           Right u' -> handleScope (scopeMap loop u') yield
 --           where yield = loop . dequeue q
 
         -- runState :: Syntax sig ⇒ (s, Prog (HState s+sig) a) → Prog sig (s,a)
-        -- runState s (Other op) = Op (handle (s, ()) (uncurry runState) op)
+        -- runState s (Other op) = Op (handleState (s, ()) (uncurry runState) op)
 
 -- runException :: Eff … a -> Eff … (Either err a)
 
