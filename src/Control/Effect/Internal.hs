@@ -325,6 +325,8 @@ newtype Lift effect m a = Lift { unLift :: effect (m a) }
 
 instance Functor effect => Scope (Lift effect) where
   hmap f (Lift effect) = Lift (fmap f effect)
+  scopeMap f (Lift effect) = Lift (f <$> effect)
+  handleState c hdl (Lift effect) = Lift (hdl . (<$ c) <$> effect)
 
 
 data Nondeterminism m result where
